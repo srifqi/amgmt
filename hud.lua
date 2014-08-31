@@ -1,6 +1,5 @@
 amgmt.hud = {}
 
-local bedrock_timer = 0
 minetest.register_globalstep(function(dtime)
 	if dtime < 0.1 then return end
 	for _,player in ipairs(minetest.get_connected_players()) do

@@ -7,6 +7,7 @@ minetest.register_on_mapgen_init(function(mgparams)
 end)
 
 --param?
+DEBUG = true -- turn this off if your debug.txt is too full
 wl = 0
 HMAX = 300
 HMIN = -6000
@@ -18,6 +19,11 @@ tree = {}
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/nodes.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/trees.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/biomemgr.lua")
+dofile(minetest.get_modpath(minetest.get_current_modname()).."/oremgr.lua")
+
+function amgmt.debug(text)
+	if DEBUG == true then print("[amgmt]:"..(text or "")) end
+end
 
 local function get_perlin_map(seed, octaves, persistance, scale, minp, maxp)
 	local sidelen = maxp.x - minp.x +1
@@ -50,7 +56,7 @@ local c_lava_source = gci("default:lava_source")
 local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local t1 = os.clock()
 	local pr = PseudoRandom(seed)
-	print("[amgmt]:"..minp.x..","..minp.y..","..minp.z)
+	amgmt.debug(minp.x..","..minp.y..","..minp.z)
 	local area = VoxelArea:new{
 		MinEdge={x=emin.x, y=emin.y, z=emin.z},
 		MaxEdge={x=emax.x, y=emax.y, z=emax.z},
@@ -64,7 +70,6 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local spc1 = get_perlin_map(np.h.s, np.h.o, np.h.p, np.h.c, minp, maxp) -- special1
 	local cave = minetest.get_perlin(3456, 6, 0.5, 360) -- cave
 	--local laca = minetest.get_perlin(1278, 6, 0.5, 360) -- lava cave
-	print("[amgmt]:terrain generation")
 	local nizx = 0
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
@@ -99,16 +104,19 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 			--]]
 			-- biome
 			else
-				data[vi] = c_air
-				--data[vi] = biome.get_block_by_temp_humi(temp_, humi_, base_, wl, y_, x, z)
+				--data[vi] = c_air
+				data[vi] = biome.get_block_by_temp_humi(temp_, humi_, base_, wl, y_, x, z)
 			end
 		end
-		
 	end
 	end
+	amgmt.debug("terrain generated")
+	
+	--ore generation
+	amgmt.ore.generate(minp, maxp, data, area, seed)
+	amgmt.debug("ore generated")
 	
 	--forming lake
-	print("[amgmt]:forming lake")
 	local found_lake = false
 	local chulen = (maxp.x - minp.x + 1) / 16
 	for cz = 0, chulen-1 do
@@ -122,7 +130,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
 		local lake_ = math.abs(spc1[nizx])
 		if lake_ < 0.001 then
-			print("[amgmt] lake found! "..x..","..base_..","..z.."("..lake_..")")
+			amgmt.debug("lake found! "..x..","..base_..","..z.."("..lake_..")")
 			found_lake = true
 			for u = -2, 2 do
 			for i = -2, 2 do
@@ -151,12 +159,9 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	end
 	end
 	end
-	
-	--ore generation
-	--print("[amgmt]:generating ore")
+	amgmt.debug("lake formed")
 	
 	--tree planting
-	print("[amgmt]:planting tree")
 	local nizx = 0
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
@@ -204,15 +209,16 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		end
 	end
 	end
+	amgmt.debug("tree planted")
 	
-	print("[amgmt]:applying map data")
+	amgmt.debug("applying map data")
 	vm:set_data(data)
 	vm:set_lighting({day=0, night=0})
 	vm:update_liquids()
 	vm:calc_lighting()
 	vm:write_to_map(data)
 	local chugent = math.ceil((os.clock() - t1) * 100000)/100
-	print("[amgmt]:Done in "..chugent.."ms")
+	amgmt.debug("Done in "..chugent.."ms")
 end
 
 minetest.register_on_generated(function(minp, maxp, seed)
@@ -224,3 +230,7 @@ end)
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/hud.lua")
 
 print("[amgmt] (Another Map Generator for Minetest) Loaded")
+
+print("[amgmt]:"..tree.count.." tree(s) registered")
+print("[amgmt]:"..#biome.list.." biome(s) registered")
+print("[amgmt]:"..#amgmt.ore.registered.." ore(s) registered")

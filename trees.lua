@@ -1,5 +1,6 @@
 tree = tree or {}
 tree.registered = {}
+tree.count = 0
 
 function tree.spawn(pos,name,data,area,seed,minp,maxp,pr)
 	tree.registered[name].grow(pos, data, area, seed, minp, maxp, pr)
@@ -13,6 +14,7 @@ function tree.register(def)
 		grows_on = def.grows_on or "default:dirt_with_grass",
 		grow = def.grow or function() return nil end
 	}
+	tree.count = tree.count + 1
 end
 
 tree.register({
@@ -24,8 +26,11 @@ tree.register({
 local gci = minetest.get_content_id
 local c_air = gci("air")
 local c_ignore = gci("ignore")
+local c_dirt_grass = gci("default:dirt_with_grass")
 local c_tree = gci("default:tree")
 local c_leaves = gci("default:leaves")
+local c_jungletree = gci("default:jungletree")
+local c_jungleleaves = gci("default:jungleleaves")
 local c_snow = gci("default:snow")
 
 --add leaves function
@@ -65,13 +70,73 @@ tree.register({
 		
 		for ii = 1, 8 do
 			local xx = x + pr:next(-2,2)
-			local yy = y + pr:next(-2,2)
+			local yy = y + pr:next(-1,2)
 			local zz = z + pr:next(-2,2)
-			local vi = area:index(xx, yy, zz)
-			add_leaves(data, vi, c_leaves, c_leaves)
+			for xxx = 0, 1 do
+			for yyy = 0, 1 do
+			for zzz = 0, 1 do
+				local vi = area:index(xx+xxx, yy+yyy, zz+zzz)
+				add_leaves(data, vi, c_leaves, c_leaves)
+			end
+			end
+			end
 		end
 		
-		--print("normal tree spawned at:"..x..","..y..","..z)
+		--amgmt.debug("normal tree spawned at:"..x..","..y..","..z)
+	end
+})
+
+--jungle tree
+tree.register({
+	name = "jungle",
+	chance = 10,
+	minh = 1,
+	maxh = 85,
+	grows_on = "default:dirt_with_grass",
+	grow = function(pos, data, area, seed, minp, maxp, pr)
+		local x, y, z = pos.x, pos.y, pos.z
+		local th = pr:next(8,12)
+		
+		for zz = math.max(z-1,minp.z), math.min(z+1,maxp.z) do
+		for xx = math.max(x-1,minp.x), math.min(x+1,maxp.x) do
+			if pr:next(1,3) >= 2 then
+				local vi = area:index(xx, y, zz)
+				add_leaves(data, vi, c_jungletree)
+			end
+		end
+		end
+		
+		for yy = math.max(y,minp.y), math.min(y+th,maxp.y) do
+			local vi = area:index(x, yy, z)
+			data[vi] = c_jungletree
+		end
+		
+		local y = y + th - 1
+		
+		for xx = math.max(x-1,minp.x), math.min(x+1,maxp.x) do
+		for yy = math.max(y-1,minp.y), math.min(y+1,maxp.y) do
+		for zz = math.max(z-1,minp.z), math.min(z+1,maxp.z) do
+			local vi = area:index(xx, yy, zz)
+			add_leaves(data, vi, c_jungleleaves)
+		end
+		end
+		end
+		
+		for ii = 1, 30 do
+			local xx = x + pr:next(-3,3)
+			local yy = y + pr:next(-2,2)
+			local zz = z + pr:next(-3,3)
+			for xxx = 0, 1 do
+			for yyy = 0, 1 do
+			for zzz = 0, 1 do
+				local vi = area:index(xx+xxx, yy+yyy, zz+zzz)
+				add_leaves(data, vi, c_jungleleaves, c_jungleleaves)
+			end
+			end
+			end
+		end
+		
+		--amgmt.debug("jungle tree spawned at:"..x..","..y..","..z)
 	end
 })
 
@@ -106,11 +171,17 @@ tree.register({
 			local yy = y + pr:next(-2,2)
 			local zz = z + pr:next(-2,2)
 			
-			local vi = area:index(xx, yy, zz)
-			add_leaves(data, vi, c_leaves, c_leaves)
+			for xxx = 0, 1 do
+			for yyy = 0, 1 do
+			for zzz = 0, 1 do
+				local vi = area:index(xx+xxx, yy+yyy, zz+zzz)
+				add_leaves(data, vi, c_leaves, c_leaves)
+			end
+			end
+			end
 		end
 		
-		--print("savanna tree spawned at:"..x..","..y..","..z)
+		--amgmt.debug("savanna tree spawned at:"..x..","..y..","..z)
 	end
 })
 
@@ -153,7 +224,7 @@ tree.register({
 		end
 		end
 		
-		--print("pine tree spawned at:"..x..","..y..","..z)
+		--amgmt.debug("pine tree spawned at:"..x..","..y..","..z)
 	end
 })
 
@@ -190,7 +261,7 @@ tree.register({
 		local vi = area:index(x, y+th+1, z)
 		add_leaves(data, vi, c_leaves)
 		
-		--print("pine tree spawned at:"..x..","..y..","..z)
+		--amgmt.debug("pine tree spawned at:"..x..","..y..","..z)
 	end
 })
 
@@ -199,6 +270,7 @@ tree.register({
 local c_cactus = gci("default:cactus")
 local c_dry_shrub = gci("default:dry_shrub")
 local c_papyrus = gci("default:papyrus")
+local c_junglegrass  = gci("default:junglegrass")
 local c_grass_1  = gci("default:grass_1")
 local c_grass_2  = gci("default:grass_2")
 local c_grass_3  = gci("default:grass_3")
@@ -220,7 +292,7 @@ tree.register({
 			data[vi] = c_dry_shrub
 		end
 		
-		--print("dry shrub spawned at:"..x..","..y..","..z)
+		--amgmt.debug("dry shrub spawned at:"..x..","..y..","..z)
 	end
 })
 
@@ -237,7 +309,7 @@ tree.register({
 			data[area:index(x, yy, z)] = c_cactus
 		end
 		
-		--print("cactus spawned at:"..x..","..y..","..z)
+		--amgmt.debug("cactus spawned at:"..x..","..y..","..z)
 	end
 })
 
@@ -254,7 +326,45 @@ tree.register({
 			data[area:index(x, yy, z)] = c_papyrus
 		end
 		
-		--print("papyrus spawned at:"..x..","..y..","..z)
+		--amgmt.debug("papyrus spawned at:"..x..","..y..","..z)
+	end
+})
+
+--grass at extreme hills
+tree.register({
+	name = "grass_extreme",
+	chance = 60,
+	minh = 1,
+	maxh = 500,
+	grows_on = "default:stone",
+	grow = function(pos, data, area, seed, minp, maxp, pr)
+		local x, y, z = pos.x, pos.y, pos.z
+		local base = y-1 + math.ceil(math.abs(y-1 - wl) * 1/5)
+		local vi = area:index(x, base, z)
+		if data[vi] == c_dirt_grass then
+			local vi = area:index(x, base+1, z)
+			data[vi] = c_grasses[pr:next(1,5)]
+		end
+		
+		--amgmt.debug("grass spawned at:"..x..","..y..","..z)
+	end
+})
+
+-- jungle grass
+tree.register({
+	name = "jungle_grass",
+	chance = 25,
+	minh = 1,
+	maxh = 85,
+	grows_on = "default:dirt_with_grass",
+	grow = function(pos, data, area, seed, minp, maxp, pr)
+		local x, y, z = pos.x, pos.y, pos.z
+		local vi = area:index(x, y, z)
+		if data[vi] == c_air or data[vi] == c_ignore then
+			data[vi] = c_junglegrass
+		end
+		
+		--amgmt.debug("jungle grass spawned at:"..x..","..y..","..z)
 	end
 })
 
@@ -272,7 +382,7 @@ tree.register({
 			data[vi] = c_grasses[pr:next(1,4)]
 		end
 		
-		--print("grass spawned at:"..x..","..y..","..z)
+		--amgmt.debug("grass spawned at:"..x..","..y..","..z)
 	end
 })
 
@@ -290,7 +400,7 @@ tree.register({
 			data[vi] = c_grasses[pr:next(3,5)]
 		end
 		
-		--print("grass spawned at:"..x..","..y..","..z)
+		--amgmt.debug("grass spawned at:"..x..","..y..","..z)
 	end
 })
 
@@ -317,7 +427,7 @@ tree.register({
 			data[vi] = c_flowers[pr:next(1,6)]
 		end
 		
-		--print("flowers spawned at:"..x..","..y..","..z)
+		--amgmt.debug("flowers spawned at:"..x..","..y..","..z)
 	end
 })
 
@@ -337,8 +447,9 @@ tree.register({
 			local h = pr:next(4,7)
 			for u = -1, 1 do
 			for i = -1, 1 do
-			for o = 0, h do
-				if data[area:index(x+u, y-1, z+i)] == c_dirt_with_snow then
+			local vi = area:index(x+u, y-1, z+i)
+			if data[vi] ~= c_air or data[vi] ~= c_ignore then
+				for o = 0, h do
 					local vi = area:index(x+u, y+o, z+i)
 					data[vi] = c_ice
 				end
@@ -348,8 +459,9 @@ tree.register({
 			j = h + pr:next(2,3)
 			for u = 0, 1 do
 			for i = -1, 0 do
-			for o = h, j do
-				if data[area:index(x+u, y-1, z+i)] == c_dirt_with_snow then
+			local vi = area:index(x+u, y-1, z+i)
+			if data[vi] ~= c_air or data[vi] ~= c_ignore then
+				for o = h, j do
 					local vi = area:index(x+u, y+o, z+i)
 					data[vi] = c_ice
 				end
@@ -360,6 +472,6 @@ tree.register({
 			data[vi] = c_ice
 		end
 		
-		--print("ice spikes spawned at:"..x..","..y..","..z)
+		--amgmt.debug("ice spikes spawned at:"..x..","..y..","..z)
 	end
 })
