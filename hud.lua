@@ -12,8 +12,8 @@ minetest.register_globalstep(function(dtime)
 		local temp = 0
 		local humi = 0
 		if base > 95 then
-			temp = 0.05
-			humi = 0.9
+			temp = 0.1
+			humi = 90
 		else
 			temp = minetest.get_perlin(np.t.s, np.t.o, np.t.p, np.t.c):get2d({x=pos.x,y=pos.z})
 			humi = minetest.get_perlin(np.h.s, np.h.o, np.h.p, np.h.c):get2d({x=pos.x,y=pos.z})

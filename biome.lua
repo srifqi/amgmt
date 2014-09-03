@@ -407,7 +407,7 @@ badd({
 			if y < wl then
 				return c_dirt
 			else
-				if temp > 1.7 and base == wl then
+				if temp > 1.6 and base == wl then
 					return c_sand
 				else
 					return c_dirt_savanna

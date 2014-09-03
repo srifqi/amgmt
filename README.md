@@ -1,7 +1,7 @@
 amgmt
 =====
 
-Another Map Generator mod for Minetest (fork from amg)
+Another Map Generator mod for Minetest (forked from amg)
 
 Still experimental!
 
@@ -16,6 +16,7 @@ CC0 1.0 Universal
 - 15 biome
 - Biomes, Trees, Nodes, Ores, etc. are modifyable
 - Experimental water lakes!
+- Using 5 2D perlin noise and 1 3D perlin noise
 
 ##List of Biomes
 - Ice Plains

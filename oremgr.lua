@@ -61,6 +61,8 @@ function amgmt.ore.generate(minp, maxp, data, area, seed)
 		for ii = 1, #ore do
 			local oi = ore[ii]
 			local pr = PseudoRandom(seed + oi.seeddiff)
+			-- make it more random first
+			for rr = 0, math.abs(xx/16 + yy/16 + zz/16) do local rrr = pr:next(0,1) end
 			for oo = 1, oi.clust_num do
 				local xx_ = xx + pr:next(0,16)
 				local yy_ = yy + pr:next(0,16)

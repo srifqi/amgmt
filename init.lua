@@ -9,10 +9,10 @@ end)
 --param?
 DEBUG = true -- turn this off if your debug.txt is too full
 wl = 0
-HMAX = 300
-HMIN = -6000
-BEDROCK = -5000
-BEDROCK2 = -6000
+HMAX = 500
+HMIN = -10000
+BEDROCK = -4999
+BEDROCK2 = -9999
 
 biome = {}
 tree = {}
@@ -69,7 +69,6 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local humi = get_perlin_map(np.h.s, np.h.o, np.h.p, np.h.c, minp, maxp) -- humidity (0-100)
 	local spc1 = get_perlin_map(np.h.s, np.h.o, np.h.p, np.h.c, minp, maxp) -- special1
 	local cave = minetest.get_perlin(3456, 6, 0.5, 360) -- cave
-	--local laca = minetest.get_perlin(1278, 6, 0.5, 360) -- lava cave
 	local nizx = 0
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
@@ -78,7 +77,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		local temp_ = 0
 		local humi_ = 0
 		if base_ > 95 then
-			temp_ = 0.10
+			temp_ = 0.1
 			humi_ = 90
 		else
 			temp_ = math.abs(temp[nizx] * 2)
@@ -96,11 +95,6 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 			-- cave
 			elseif math.abs(cave:get3d({x=x,y=y_,z=z})) < 0.005 then
 				data[vi] = c_air
-			--]]
-			--[[
-			-- lava cave
-			elseif math.abs(laca:get3d({x=x,y=y_,z=z})) > 350 and y_ < wl * 2/3 then
-				data[vi] = c_lava_source
 			--]]
 			-- biome
 			else
@@ -179,18 +173,10 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		local biome__ = biome.list[biome.get_by_temp_humi(temp_,humi_)[1]]
 		local tr = biome__.trees
 		local filled = false
-		--print("done. "..biome__.name.." Biome. spawning "..#tr.." type of floras ...")
 		for i = 1, #tr do
 			if filled == true then break end
 			local tri = tree.registered[tr[i][1]] or tree.registered["nil"]
 			local chance = tr[i][2] or 1024
-			--[[
-			print(
-				"try to spawn "..tr[i][1]..
-				" at "..x..","..(base_+1)..","..z..
-				" in "..biome__.name.." biome"
-			)
-			--]]
 			if
 				pr:next(1,chance) == 1 and
 				base_+1 >= tri.minh and base_+1 <= tri.maxh and
