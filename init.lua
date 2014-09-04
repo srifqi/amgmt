@@ -41,6 +41,8 @@ np = {
 	m = {s = 4321, o = 6, p = 0.5, c = 256},
 	t = {s = 5678, o = 7, p = 0.5, c = 512},
 	h = {s = 8765, o = 7, p = 0.5, c = 512},
+	c = {s = 1111, o = 7, p = 0.5, c = 512},
+	d = {s = 2222, o = 7, p = 0.5, c = 512},
 	s1 = {s = 125, o = 6, p = 0.5, c = 256},
 }
 
@@ -48,10 +50,26 @@ np = {
 local gci = minetest.get_content_id
 local c_air = gci("air")
 local c_bedrock = gci("amgmt:bedrock")
+local c_stone = gci("default:stone")
+local c_dirt = gci("default:dirt")
+local c_dirt_grass = gci("default:dirt_with_grass")
 local c_sand = gci("default:sand")
 local c_sandstone = gci("default:sandstone")
 local c_water = gci("default:water_source")
 local c_lava_source = gci("default:lava_source")
+
+local function build_cave_segment(x, y, z, data, area, halfsize, deletednodes)
+	for zz = -halfsize, halfsize do
+	for yy = -halfsize, halfsize do
+	for xx = -halfsize, halfsize do
+		local vi = area:index(x+xx,y+yy,z+zz)
+		if data[vi] == deletednodes then 
+			data[vi] = c_air
+		end
+	end
+	end
+	end
+end
 
 local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local t1 = os.clock()
@@ -67,8 +85,10 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local moun = get_perlin_map(np.m.s, np.m.o, np.m.p, np.m.c, minp, maxp) -- addition
 	local temp = get_perlin_map(np.t.s, np.t.o, np.t.p, np.t.c, minp, maxp) -- temperature (0-2)
 	local humi = get_perlin_map(np.h.s, np.h.o, np.h.p, np.h.c, minp, maxp) -- humidity (0-100)
-	local spc1 = get_perlin_map(np.h.s, np.h.o, np.h.p, np.h.c, minp, maxp) -- special1
-	local cave = minetest.get_perlin(3456, 6, 0.5, 360) -- cave
+	local spc1 = get_perlin_map(np.s1.s, np.s1.o, np.s1.p, np.s1.c, minp, maxp) -- special1
+	local cave = get_perlin_map(np.c.s, np.c.o, np.c.p, np.c.c, minp, maxp) -- cave
+	local deep = get_perlin_map(np.d.s, np.d.o, np.d.p, np.d.c, minp, maxp) -- deep
+	local fissure = minetest.get_perlin(3456, 6, 0.5, 360) -- fissure
 	local nizx = 0
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
@@ -92,8 +112,8 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 			elseif y_ == BEDROCK or y_ == BEDROCK2 then
 				data[vi] = c_bedrock
 			--
-			-- cave
-			elseif math.abs(cave:get3d({x=x,y=y_,z=z})) < 0.005 then
+			-- fissure
+			elseif math.abs(fissure:get3d({x=x,y=y_,z=z})) < 0.005 then
 				data[vi] = c_air
 			--]]
 			-- biome
@@ -109,6 +129,25 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	--ore generation
 	amgmt.ore.generate(minp, maxp, data, area, seed)
 	amgmt.debug("ore generated")
+	
+	--cave forming
+	local nizx = 0
+	for z = minp.z, maxp.z do
+	for x = minp.x, maxp.x do
+		nizx = nizx + 1
+		local cave_ = math.abs(cave[nizx])
+		local deep_ = deep[nizx] * 30 + 5
+		--print(x..","..z..":"..cave_..","..deep_)
+		if cave_ < 0.015 then
+			local y = math.floor(wl + deep_ + 0.5)
+			build_cave_segment(x, y, z, data, area, 1, c_stone)
+			build_cave_segment(x, y, z, data, area, 1, c_dirt)
+			build_cave_segment(x, y, z, data, area, 1, c_dirt_grass)
+			--if cave_ < 0.015 then print("cave generated at:"..x..","..y..","..z) end
+		end
+	end
+	end
+	amgmt.debug("cave generated")
 	
 	--forming lake
 	local found_lake = false
