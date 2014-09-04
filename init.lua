@@ -14,8 +14,8 @@ HMIN = -10000
 BEDROCK = -4999
 BEDROCK2 = -9999
 
-biome = {}
-tree = {}
+amgmt.biome = {}
+amgmt.tree = {}
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/nodes.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/trees.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/biomemgr.lua")
@@ -113,13 +113,13 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 				data[vi] = c_bedrock
 			--
 			-- fissure
-			elseif math.abs(fissure:get3d({x=x,y=y_,z=z})) < 0.005 then
+			elseif math.abs(fissure:get3d({x=x,y=y_,z=z})) < 0.0045 then
 				data[vi] = c_air
 			--]]
 			-- biome
 			else
 				--data[vi] = c_air
-				data[vi] = biome.get_block_by_temp_humi(temp_, humi_, base_, wl, y_, x, z)
+				data[vi] = amgmt.biome.get_block_by_temp_humi(temp_, humi_, base_, wl, y_, x, z)
 			end
 		end
 	end
@@ -209,19 +209,19 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 			temp_ = math.abs(temp[nizx] * 2)
 			humi_ = math.abs(humi[nizx] * 100)
 		end
-		local biome__ = biome.list[biome.get_by_temp_humi(temp_,humi_)[1]]
+		local biome__ = amgmt.biome.list[amgmt.biome.get_by_temp_humi(temp_,humi_)[1]]
 		local tr = biome__.trees
 		local filled = false
 		for i = 1, #tr do
 			if filled == true then break end
-			local tri = tree.registered[tr[i][1]] or tree.registered["nil"]
+			local tri = amgmt.tree.registered[tr[i][1]] or amgmt.tree.registered["nil"]
 			local chance = tr[i][2] or 1024
 			if
 				pr:next(1,chance) == 1 and
 				base_+1 >= tri.minh and base_+1 <= tri.maxh and
 				data[area:index(x,base_,z)] == gci(tri.grows_on)
 			then
-				tree.spawn({x=x,y=base_+1,z=z},tr[i][1],data,area,seed,minp,maxp,pr)
+				amgmt.tree.spawn({x=x,y=base_+1,z=z},tr[i][1],data,area,seed,minp,maxp,pr)
 				filled = true
 				--[[
 				print(
@@ -256,6 +256,6 @@ dofile(minetest.get_modpath(minetest.get_current_modname()).."/hud.lua")
 
 print("[amgmt] (Another Map Generator for Minetest) Loaded")
 
-print("[amgmt]:"..tree.count.." tree(s) registered")
-print("[amgmt]:"..#biome.list.." biome(s) registered")
+print("[amgmt]:"..amgmt.tree.count.." tree(s) registered")
+print("[amgmt]:"..#amgmt.biome.list.." biome(s) registered")
 print("[amgmt]:"..#amgmt.ore.registered.." ore(s) registered")

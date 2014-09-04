@@ -1,26 +1,28 @@
-tree = tree or {}
-tree.registered = {}
-tree.count = 0
+amgmt.tree = amgmt.tree or {}
+amgmt.tree.registered = {}
+amgmt.tree.count = 0
 
-function tree.spawn(pos,name,data,area,seed,minp,maxp,pr)
-	tree.registered[name].grow(pos, data, area, seed, minp, maxp, pr)
+function amgmt.tree.spawn(pos,name,data,area,seed,minp,maxp,pr)
+	amgmt.tree.registered[name].grow(pos, data, area, seed, minp, maxp, pr)
 end
 
-function tree.register(def)
-	tree.registered[def.name] = {
+function amgmt.tree.register(def)
+	amgmt.tree.registered[def.name] = {
 		chance = def.chance or 1024,
 		minh = def.minh or 0,
 		maxh = def.maxh or HMAX,
 		grows_on = def.grows_on or "default:dirt_with_grass",
 		grow = def.grow or function() return nil end
 	}
-	tree.count = tree.count + 1
+	amgmt.tree.count = amgmt.tree.count + 1
 end
 
-tree.register({
+amgmt.tree.register({
 	name = "nil",
 	grow = function() end
 })
+
+local regtr = amgmt.tree.register
 
 --node id?
 local gci = minetest.get_content_id
@@ -42,7 +44,7 @@ local function add_leaves(data, vi, c_leaf, other)
 end
 
 --normal tree
-tree.register({
+regtr({
 	name = "normal",
 	chance = 15,
 	minh = 1,
@@ -87,7 +89,7 @@ tree.register({
 })
 
 --jungle tree
-tree.register({
+regtr({
 	name = "jungle",
 	chance = 10,
 	minh = 1,
@@ -141,7 +143,7 @@ tree.register({
 })
 
 --savanna tree
-tree.register({
+regtr({
 	name = "savanna",
 	chance = 225,
 	minh = 1,
@@ -186,7 +188,7 @@ tree.register({
 })
 
 --pine tree at cold taiga
-tree.register({
+regtr({
 	name = "pine_cold",
 	chance = 40,
 	minh = 1,
@@ -229,7 +231,7 @@ tree.register({
 })
 
 --pine tree at taiga
-tree.register({
+regtr({
 	name = "pine_taiga",
 	chance = 40,
 	minh = 1,
@@ -279,7 +281,7 @@ local c_grass_5  = gci("default:grass_5")
 local c_grasses = {c_grass_1, c_grass_2, c_grass_3, c_grass_4, c_grass_5}
 
 --dry shrub
-tree.register({
+regtr({
 	name = "dry_shrub",
 	chance = 50,
 	minh = 1,
@@ -297,7 +299,7 @@ tree.register({
 })
 
 --cactus
-tree.register({
+regtr({
 	name = "cactus",
 	chance = 50,
 	minh = 1,
@@ -314,7 +316,7 @@ tree.register({
 })
 
 --papyrus
-tree.register({
+regtr({
 	name = "papyrus",
 	chance = 10,
 	minh = wl+1,
@@ -331,7 +333,7 @@ tree.register({
 })
 
 --grass at extreme hills
-tree.register({
+regtr({
 	name = "grass_extreme",
 	chance = 60,
 	minh = 1,
@@ -351,7 +353,7 @@ tree.register({
 })
 
 -- jungle grass
-tree.register({
+regtr({
 	name = "jungle_grass",
 	chance = 25,
 	minh = 1,
@@ -369,7 +371,7 @@ tree.register({
 })
 
 --grass 1-4
-tree.register({
+regtr({
 	name = "grass14",
 	chance = 60,
 	minh = 1,
@@ -387,7 +389,7 @@ tree.register({
 })
 
 --grass 3-5
-tree.register({
+regtr({
 	name = "grass35",
 	chance = 5,
 	minh = 4,
@@ -414,7 +416,7 @@ local c_viola = gci("flowers:viola")
 local c_flowers = {c_dandelion_white, c_dandelion_yellow, c_geranium, c_rose, c_tulip, c_viola}
 
 --flower
-tree.register({
+regtr({
 	name = "flowers",
 	chance = 3,
 	minh = 4,
@@ -434,7 +436,7 @@ tree.register({
 local c_ice = gci("default:ice")
 
 --ice spikes
-tree.register({
+regtr({
 	name = "ice_spike",
 	chance = 25,
 	minh = 4,

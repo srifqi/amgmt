@@ -1,6 +1,7 @@
-biome = biome or {}
+amgmt = amgmt or {}
+amgmt.biome = amgmt.biome or {}
 local gci = minetest.get_content_id
-local badd = biome.add
+local badd = amgmt.biome.add
 
 -- node id?
 local c_air = gci("air")

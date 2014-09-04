@@ -1,8 +1,9 @@
-biome = biome or {}
+amgmt = amgmt or {}
+amgmt.biome = amgmt.biome or {}
 
-biome.list = {}
-function biome.add(p)
-	biome.list[#biome.list+1] = {
+amgmt.biome.list = {}
+function amgmt.biome.add(p)
+	amgmt.biome.list[#amgmt.biome.list+1] = {
 		name = p.name,
 		mint = p.mint, -- min temperature
 		maxt = p.maxt, -- max
@@ -14,7 +15,7 @@ function biome.add(p)
 end
 
 -- testing purpose only!
-biome.add({
+amgmt.biome.add({
 	name = "NIL (Biome?)",
 	mint = -5,
 	maxt = -3,
@@ -22,10 +23,10 @@ biome.add({
 })
 --]]
 
-function biome.get_by_temp_humi(t,h)
+function amgmt.biome.get_by_temp_humi(t,h)
 	t = math.min(t, 2)
 	h = math.min(h, 100)
-	local bl = biome.list
+	local bl = amgmt.biome.list
 	local found = {}
 	for i = 1, #bl do
 		if t >= bl[i].mint and t <= bl[i].maxt then
@@ -42,11 +43,13 @@ function biome.get_by_temp_humi(t,h)
 	return {0,"NIL (Biome?)"}
 end
 
-function biome.get_block_by_temp_humi(temp,humi,base,wl,y,x,z)
+function amgmt.biome.get_block_by_temp_humi(temp,humi,base,wl,y,x,z)
 	temp = math.min(temp, 2)
 	humi = math.min(humi, 100)
 	base = math.min(base, 255)
-	return biome.list[biome.get_by_temp_humi(temp,humi)[1]].get_block(temp,humi,base,wl,y,x,z) or 0
+	return amgmt.biome.list[
+		amgmt.biome.get_by_temp_humi(temp,humi)[1]
+	].get_block(temp,humi,base,wl,y,x,z) or 0
 end
 
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/biome.lua")

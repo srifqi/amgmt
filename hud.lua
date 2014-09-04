@@ -19,7 +19,7 @@ minetest.register_globalstep(function(dtime)
 			humi = minetest.get_perlin(np.h.s, np.h.o, np.h.p, np.h.c):get2d({x=pos.x,y=pos.z})
 		end
 		
-		local biometext = biome.get_by_temp_humi(math.abs(temp*2),math.abs(humi*100))[2]
+		local biometext = amgmt.biome.get_by_temp_humi(math.abs(temp*2),math.abs(humi*100))[2]
 		
 		if not amgmt.hud[name] then
 			amgmt.hud[name] = {}
