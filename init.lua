@@ -53,11 +53,31 @@ local c_bedrock = gci("amgmt:bedrock")
 local c_stone = gci("default:stone")
 local c_dirt = gci("default:dirt")
 local c_dirt_grass = gci("default:dirt_with_grass")
+local c_dirt_snow = gci("default:dirt_with_snow")
+local c_dirt_savanna = gci("amgmt:dirt_at_savanna")
 local c_sand = gci("default:sand")
 local c_sandstone = gci("default:sandstone")
 local c_water = gci("default:water_source")
 local c_lava_source = gci("default:lava_source")
 
+local function distance(x1,y1,z1,x2,y2,z2)
+	return ((x2-x1)^2+(y2-y1)^2+(z2-z1)^2)^0.5
+end
+
+local function build_cave_segment(x, y, z, data, area, radius, deletednodes)
+	for zz = -radius, radius do
+	for yy = -radius, radius do
+	for xx = -radius, radius do
+		local vi = area:index(x+xx,y+yy,z+zz)
+		if data[vi] == deletednodes and distance(x,y,z,x+xx,y+yy,z+zz) <= radius then 
+			data[vi] = c_air
+		end
+	end
+	end
+	end
+end
+
+--[[
 local function build_cave_segment(x, y, z, data, area, halfsize, deletednodes)
 	for zz = -halfsize, halfsize do
 	for yy = -halfsize, halfsize do
@@ -70,6 +90,7 @@ local function build_cave_segment(x, y, z, data, area, halfsize, deletednodes)
 	end
 	end
 end
+--]]
 
 local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local t1 = os.clock()
@@ -138,12 +159,18 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		local cave_ = math.abs(cave[nizx])
 		local deep_ = deep[nizx] * 30 + 5
 		--print(x..","..z..":"..cave_..","..deep_)
-		if cave_ < 0.015 then
+		if cave_ < 0.015 or cave_ > 1-0.015 then
 			local y = math.floor(wl + deep_ + 0.5)
 			build_cave_segment(x, y, z, data, area, 1, c_stone)
 			build_cave_segment(x, y, z, data, area, 1, c_dirt)
 			build_cave_segment(x, y, z, data, area, 1, c_dirt_grass)
-			--if cave_ < 0.015 then print("cave generated at:"..x..","..y..","..z) end
+			build_cave_segment(x, y, z, data, area, 1, c_dirt_snow)
+			build_cave_segment(x, y, z, data, area, 1, c_dirt_savanna)
+			--[[
+			if cave_ < 0.015 or cave_ > 1-0.015 then
+				print("cave generated at:"..x..","..y..","..z)
+			end
+			--]]
 		end
 	end
 	end
