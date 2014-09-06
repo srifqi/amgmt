@@ -22,8 +22,8 @@ badd({
 	name = "Frozen River",
 	mint = 0,
 	maxt = 0.4,
-	minh = 49,
-	maxh = 51,
+	minh = 45,
+	maxh = 55,
 	get_block = function(temp, humi, base_, wl, y)
 		local base = wl - math.ceil(math.abs(base_ - wl) * 1/3) - 1
 		if y > base and y > wl then
@@ -45,8 +45,8 @@ badd({
 	name = "River",
 	mint = 0.4,
 	maxt = 2.0,
-	minh = 49,
-	maxh = 51,
+	minh = 45,
+	maxh = 55,
 	get_block = function(temp, humi, base_, wl, y)
 		local base = wl - math.ceil(math.abs(base_ - wl) * 1/3) - 1
 		if y > base and y > wl then

@@ -41,9 +41,11 @@ np = {
 	m = {s = 4321, o = 6, p = 0.5, c = 256},
 	t = {s = 5678, o = 7, p = 0.5, c = 512},
 	h = {s = 8765, o = 7, p = 0.5, c = 512},
-	c = {s = 1111, o = 7, p = 0.5, c = 512},
-	d = {s = 2222, o = 7, p = 0.5, c = 512},
-	s1 = {s = 125, o = 6, p = 0.5, c = 256},
+	c1 = {s = 1111, o = 7, p = 0.5, c = 512},
+	d1 = {s = 2222, o = 7, p = 0.5, c = 512},
+	c2 = {s = 3333, o = 7, p = 0.5, c = 512},
+	d2 = {s = 4444, o = 7, p = 0.5, c = 512},
+	l = {s = 125, o = 6, p = 0.5, c = 256},
 }
 
 --node id?
@@ -60,37 +62,52 @@ local c_sandstone = gci("default:sandstone")
 local c_water = gci("default:water_source")
 local c_lava_source = gci("default:lava_source")
 
-local function distance(x1,y1,z1,x2,y2,z2)
+local function distance2(x1,y1,x2,y2)
+	return ((x2-x1)^2+(y2-y1)^2)^0.5
+end
+
+local function distance3(x1,y1,z1,x2,y2,z2)
 	return ((x2-x1)^2+(y2-y1)^2+(z2-z1)^2)^0.5
 end
 
-local function build_cave_segment(x, y, z, data, area, radius, deletednodes)
-	for zz = -radius, radius do
-	for yy = -radius, radius do
-	for xx = -radius, radius do
-		local vi = area:index(x+xx,y+yy,z+zz)
-		if data[vi] == deletednodes and distance(x,y,z,x+xx,y+yy,z+zz) <= radius then 
-			data[vi] = c_air
+local function build_cave_segment(x, y, z, data, area, shape, radius, deletednodes)
+	if shape == 1 then --sphere
+		for zz = -radius, radius do
+		for yy = -radius, radius do
+		for xx = -radius, radius do
+			local vi = area:index(x+xx,y+yy,z+zz)
+			if data[vi] == deletednodes and distance3(x,y,z,x+xx,y+yy,z+zz) <= radius then 
+				data[vi] = c_air
+			end
+		end
+		end
+		end
+	elseif shape == 2 then --cube
+		for zz = -radius, radius do
+		for yy = -radius, radius do
+		for xx = -radius, radius do
+			local vi = area:index(x+xx,y+yy,z+zz)
+			if data[vi] == deletednodes then 
+				data[vi] = c_air
+			end
+		end
+		end
+		end
+	elseif shape == 3 then --tube
+		for zz = -radius, radius do
+		for xx = -radius, radius do
+			if distance2(x,z,x+xx,z+zz) <= radius then
+				for yy = -radius, radius do
+					local vi = area:index(x+xx,y+yy,z+zz)
+					if data[vi] == deletednodes then 
+						data[vi] = c_air
+					end
+				end
+			end
+		end
 		end
 	end
-	end
-	end
 end
-
---[[
-local function build_cave_segment(x, y, z, data, area, halfsize, deletednodes)
-	for zz = -halfsize, halfsize do
-	for yy = -halfsize, halfsize do
-	for xx = -halfsize, halfsize do
-		local vi = area:index(x+xx,y+yy,z+zz)
-		if data[vi] == deletednodes then 
-			data[vi] = c_air
-		end
-	end
-	end
-	end
-end
---]]
 
 local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local t1 = os.clock()
@@ -106,9 +123,11 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local moun = get_perlin_map(np.m.s, np.m.o, np.m.p, np.m.c, minp, maxp) -- addition
 	local temp = get_perlin_map(np.t.s, np.t.o, np.t.p, np.t.c, minp, maxp) -- temperature (0-2)
 	local humi = get_perlin_map(np.h.s, np.h.o, np.h.p, np.h.c, minp, maxp) -- humidity (0-100)
-	local spc1 = get_perlin_map(np.s1.s, np.s1.o, np.s1.p, np.s1.c, minp, maxp) -- special1
-	local cave = get_perlin_map(np.c.s, np.c.o, np.c.p, np.c.c, minp, maxp) -- cave
-	local deep = get_perlin_map(np.d.s, np.d.o, np.d.p, np.d.c, minp, maxp) -- deep
+	local lake = get_perlin_map(np.l.s, np.l.o, np.l.p, np.l.c, minp, maxp) -- lake
+	local cav1 = get_perlin_map(np.c1.s, np.c1.o, np.c1.p, np.c1.c, minp, maxp) -- cave1
+	local dep1 = get_perlin_map(np.d1.s, np.d1.o, np.d1.p, np.d1.c, minp, maxp) -- deep1
+	local cav2 = get_perlin_map(np.c2.s, np.c2.o, np.c2.p, np.c2.c, minp, maxp) -- cave2
+	local dep2 = get_perlin_map(np.d2.s, np.d2.o, np.d2.p, np.d2.c, minp, maxp) -- deep2
 	local fissure = minetest.get_perlin(3456, 6, 0.5, 360) -- fissure
 	local nizx = 0
 	for z = minp.z, maxp.z do
@@ -124,7 +143,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 			temp_ = math.abs(temp[nizx] * 2)
 			humi_ = math.abs(humi[nizx] * 100)
 		end
-		--print(x..","..z.." : "..temp_)
+		--amgmt.debug(x..","..z.." : "..temp_)
 		for y_ = minp.y, maxp.y do
 			local vi = area:index(x,y_,z)
 			-- world height limit :(
@@ -156,46 +175,63 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
 		nizx = nizx + 1
-		local cave_ = math.abs(cave[nizx])
-		local deep_ = deep[nizx] * 30 + 5
-		--print(x..","..z..":"..cave_..","..deep_)
-		if cave_ < 0.015 or cave_ > 1-0.015 then
-			local y = math.floor(wl + deep_ + 0.5)
-			build_cave_segment(x, y, z, data, area, 1, c_stone)
-			build_cave_segment(x, y, z, data, area, 1, c_dirt)
-			build_cave_segment(x, y, z, data, area, 1, c_dirt_grass)
-			build_cave_segment(x, y, z, data, area, 1, c_dirt_snow)
-			build_cave_segment(x, y, z, data, area, 1, c_dirt_savanna)
-			--[[
-			if cave_ < 0.015 or cave_ > 1-0.015 then
-				print("cave generated at:"..x..","..y..","..z)
-			end
-			--]]
+		local cav1_ = math.abs(cav1[nizx])
+		local dep1_ = dep1[nizx] * 30 + 5
+		local cav2_ = math.abs(cav2[nizx])
+		local dep2_ = dep2[nizx] * 50 - 25
+		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
+		--amgmt.debug(x..","..z..":"..cav1_..","..dep1_..","..cav2_..","..dep2_)
+		
+		if cav1_ < 0.015 or cav1_ > 1-0.015 then
+			local y = math.floor(wl + dep1_ + 0.5)
+			local shape = (base_%3) + 1
+			build_cave_segment(x, y, z, data, area, shape, 1, c_stone)
+			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt)
+			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_grass)
+			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_snow)
+			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_savanna)
+			--amgmt.debug("cave generated at:"..x..","..y..","..z)
+		end
+		
+		if cav2_ < 0.015 or cav2_ > 1-0.015 then
+			local y = math.floor(wl - dep2_ - 0.5)
+			local shape = (base_%3) + 1
+			build_cave_segment(x, y, z, data, area, shape, 1, c_stone)
+			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt)
+			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_grass)
+			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_snow)
+			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_savanna)
+			--amgmt.debug("cave generated at:"..x..","..y..","..z)
 		end
 	end
 	end
 	amgmt.debug("cave generated")
 	
 	--forming lake
-	local found_lake = false
 	local chulen = (maxp.x - minp.x + 1) / 16
+	local nizx = 0
 	for cz = 0, chulen-1 do
 	for cx = 0, chulen-1 do
-	local nizx = 0
+	local nizx = cz*chulen*16 + cx*16
+	local found_lake = false
 	for z = minp.z + cz*16, minp.z + (cz+1)*16 do
 	if found_lake == true then break end
 	for x = minp.x + cx*16, minp.x + (cx+1)*16 do
 		if found_lake == true then break end
 		nizx = nizx + 1
 		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
-		local lake_ = math.abs(spc1[nizx])
-		if lake_ < 0.001 then
-			amgmt.debug("lake found! "..x..","..base_..","..z.."("..lake_..")")
+		local lake_ = math.abs(lake[nizx])
+		if lake_ < 0.0005 then
+			--amgmt.debug("lake found! "..x..","..base_..","..z.." ("..lake_..")")
 			found_lake = true
 			for u = -2, 2 do
 			for i = -2, 2 do
 				local vi = area:index(x+u,base_-2,z+i)
-				data[vi] = c_sandstone
+				if pr:next(1,3) >= 2 then
+					data[vi] = c_sandstone
+				elseif data[vi] ~= c_air then
+					data[vi] = c_stone
+				end
 			for o = -1, 0 do
 				local vi = area:index(x+u,base_+o,z+i)
 				if u > -2 and u < 2 and i > -2 and i < 2 and o == 0 then
@@ -251,7 +287,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 				amgmt.tree.spawn({x=x,y=base_+1,z=z},tr[i][1],data,area,seed,minp,maxp,pr)
 				filled = true
 				--[[
-				print(
+				amgmt.debug(
 					"spawned "..tr[i][1]..
 					" at "..x..","..(base_+1)..","..z..
 					" in "..biome__.name.." biome"
@@ -284,5 +320,5 @@ dofile(minetest.get_modpath(minetest.get_current_modname()).."/hud.lua")
 print("[amgmt] (Another Map Generator for Minetest) Loaded")
 
 print("[amgmt]:"..amgmt.tree.count.." tree(s) registered")
-print("[amgmt]:"..#amgmt.biome.list.." biome(s) registered")
+print("[amgmt]:"..(#amgmt.biome.list-1).." biome(s) registered") -- do not count NIL biome!
 print("[amgmt]:"..#amgmt.ore.registered.." ore(s) registered")

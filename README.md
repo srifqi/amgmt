@@ -17,9 +17,10 @@ CC0 1.0 Universal
 - Biomes, Trees, Nodes, Ores, etc. are modifyable
 - Experimental water lakes!
 - New caving system! (May intersect with fissure)
-- Using 7 2D perlin noise and 1 3D perlin noise
+- Using 9 2D perlin noise and 1 3D perlin noise
 
 ##List of Biomes
+- Frozen River
 - Ice Plains
 - Ice Plains Spikes
 - Cold Taiga
@@ -29,7 +30,6 @@ CC0 1.0 Universal
 - Taiga
 - Plains
 - Flower Plains
-- Frozen River
 - River
 - Forest
 - Jungle
