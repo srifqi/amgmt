@@ -1,3 +1,4 @@
+amgmt = amgmt or {}
 amgmt.ore = amgmt.ore or {}
 
 amgmt.ore.registered = {}

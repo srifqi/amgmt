@@ -1,3 +1,4 @@
+amgmt = amgmt or {}
 amgmt.hud = {}
 
 minetest.register_globalstep(function(dtime)

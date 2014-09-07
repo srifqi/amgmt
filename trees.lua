@@ -1,4 +1,5 @@
-amgmt.tree = amgmt.tree or {}
+amgmt = amgmt or {}
+amgmt.tree = {}
 amgmt.tree.registered = {}
 amgmt.tree.count = 0
 

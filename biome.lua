@@ -22,10 +22,10 @@ badd({
 	name = "Frozen River",
 	mint = 0,
 	maxt = 0.4,
-	minh = 45,
-	maxh = 55,
-	get_block = function(temp, humi, base_, wl, y)
-		local base = wl - math.ceil(math.abs(base_ - wl) * 1/3) - 1
+	minh = 47.5,
+	maxh = 52.5,
+	get_block = function(temp, humi, base, wl, y)
+		--local base = wl - math.ceil(math.abs(base_ - wl) * 1/3) - 1
 		if y > base and y > wl then
 			return c_air
 		elseif y > base and y < wl then
@@ -45,10 +45,10 @@ badd({
 	name = "River",
 	mint = 0.4,
 	maxt = 2.0,
-	minh = 45,
-	maxh = 55,
-	get_block = function(temp, humi, base_, wl, y)
-		local base = wl - math.ceil(math.abs(base_ - wl) * 1/3) - 1
+	minh = 47.5,
+	maxh = 52.5,
+	get_block = function(temp, humi, base, wl, y)
+		--local base = wl - math.ceil(math.abs(base_ - wl) * 1/3) - 1
 		if y > base and y > wl then
 			return c_air
 		elseif y > base and y <= wl then

@@ -1,9 +1,7 @@
-amgmt = amgmt or {}
-amgmt.seed = nil
+amgmt = {}
 
 minetest.register_on_mapgen_init(function(mgparams)
 	minetest.set_mapgen_params({mgname="singlenode"})
-	amgmt.seed = mgparams.seed
 end)
 
 --param?
@@ -62,6 +60,25 @@ local c_sandstone = gci("default:sandstone")
 local c_water = gci("default:water_source")
 local c_lava_source = gci("default:lava_source")
 
+local function get_base(base, temp, humi)
+	if base < wl then return math.ceil(base) end
+	local base_ = base
+	
+	if humi <= 55 and humi >= 45 then
+		if humi >= 50 then
+			base_ = wl+math.ceil(((1-(55-humi))*(base-wl)/2.5))
+		elseif humi <= 50 then
+			base_ = wl+math.ceil(((1-(humi-45))*(base-wl)/2.5))
+		end
+	end
+	
+	if humi < 52.5 and humi > 47.5 then
+		base_ = wl + math.floor((base_-wl)/3) -1
+	end
+	
+	return math.ceil(base_)
+end
+
 local function distance2(x1,y1,x2,y2)
 	return ((x2-x1)^2+(y2-y1)^2)^0.5
 end
@@ -118,7 +135,6 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		MaxEdge={x=emax.x, y=emax.y, z=emax.z},
 	}
 	local data = vm:get_data()
-	local sidelen = maxp.x - minp.x + 1
 	local base = get_perlin_map(np.b.s, np.b.o, np.b.p, np.b.c, minp, maxp) -- base height
 	local moun = get_perlin_map(np.m.s, np.m.o, np.m.p, np.m.c, minp, maxp) -- addition
 	local temp = get_perlin_map(np.t.s, np.t.o, np.t.p, np.t.c, minp, maxp) -- temperature (0-2)
@@ -143,12 +159,13 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 			temp_ = math.abs(temp[nizx] * 2)
 			humi_ = math.abs(humi[nizx] * 100)
 		end
+		base_ = get_base(base_, temp_, humi_)
 		--amgmt.debug(x..","..z.." : "..temp_)
 		for y_ = minp.y, maxp.y do
 			local vi = area:index(x,y_,z)
 			-- world height limit :(
 			if y_ < HMIN or y_ > HMAX then
-				data[vi] = c_air
+				-- air
 			elseif y_ == BEDROCK or y_ == BEDROCK2 then
 				data[vi] = c_bedrock
 			--
@@ -212,7 +229,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local nizx = 0
 	for cz = 0, chulen-1 do
 	for cx = 0, chulen-1 do
-	local nizx = cz*chulen*16 + cx*16
+	nizx = (cz*chulen + cx) * 16
 	local found_lake = false
 	for z = minp.z + cz*16, minp.z + (cz+1)*16 do
 	if found_lake == true then break end
@@ -220,6 +237,16 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		if found_lake == true then break end
 		nizx = nizx + 1
 		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
+		local temp_ = 0
+		local humi_ = 0
+		if base_ > 95 then
+			temp_ = 0.1
+			humi_ = 90
+		else
+			temp_ = math.abs(temp[nizx] * 2)
+			humi_ = math.abs(humi[nizx] * 100)
+		end
+		base_ = get_base(base_, temp_, humi_)
 		local lake_ = math.abs(lake[nizx])
 		if lake_ < 0.0005 then
 			--amgmt.debug("lake found! "..x..","..base_..","..z.." ("..lake_..")")
@@ -266,12 +293,13 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		local temp_ = 0
 		local humi_ = 0
 		if base_ > 95 then
-			temp_ = 0.10
+			temp_ = 0.1
 			humi_ = 90
 		else
 			temp_ = math.abs(temp[nizx] * 2)
 			humi_ = math.abs(humi[nizx] * 100)
 		end
+		base_ = get_base(base_, temp_, humi_)
 		local biome__ = amgmt.biome.list[amgmt.biome.get_by_temp_humi(temp_,humi_)[1]]
 		local tr = biome__.trees
 		local filled = false
