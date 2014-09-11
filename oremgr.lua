@@ -13,7 +13,7 @@ function amgmt.ore.register(def)
 		wherein = def.wherein or "default:stone",
 		seeddiff = def.seeddiff or seeddiff_count,
 		clust_num = def.clust_num or 1,
-		num_ore_per_clust = def.num_ore_per_clust or 5,
+		ore_per_clust = def.ore_per_clust or 5,
 		minh = def.minh or HMIN,
 		maxh = def.maxh or MAXH
 	}
@@ -68,10 +68,10 @@ function amgmt.ore.generate(minp, maxp, data, area, seed)
 				local xx_ = xx + pr:next(0,16)
 				local yy_ = yy + pr:next(0,16)
 				local zz_ = zz + pr:next(0,16)
-				local cubelen = get_nearest_cube(oi.num_ore_per_clust)
+				local cubelen = get_nearest_cube(oi.ore_per_clust)
 				local cubemin = math.ceil(cubelen/2) * -1
 				local cubemax = math.floor(cubelen/2)
-				for uu = 1, oi.num_ore_per_clust do
+				for uu = 1, oi.ore_per_clust do
 					local xxx = xx_ + pr:next(cubemin,cubemax)
 					local yyy = yy_ + pr:next(cubemin,cubemax)
 					local zzz = zz_ + pr:next(cubemin,cubemax)

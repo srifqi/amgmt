@@ -1,4 +1,10 @@
+-- Another Map Generator for Minetest [amgmt]
+-- Made by srifqi
+-- License: CC0 1.0 Universal
+-- Dependencies: default, flowers
+
 amgmt = {}
+print("[amgmt] (Another Map Generator for Minetest)")
 
 minetest.register_on_mapgen_init(function(mgparams)
 	minetest.set_mapgen_params({mgname="singlenode"})
@@ -8,9 +14,13 @@ end)
 DEBUG = true -- turn this off if your debug.txt is too full
 wl = 0
 HMAX = 500
-HMIN = -10000
+HMIN = -30000
 BEDROCK = -4999
-BEDROCK2 = -9999
+BEDROCK2 = -29999
+
+function amgmt.debug(text)
+	if DEBUG == true then print("[amgmt]:"..(text or "")) end
+end
 
 amgmt.biome = {}
 amgmt.tree = {}
@@ -19,21 +29,17 @@ dofile(minetest.get_modpath(minetest.get_current_modname()).."/trees.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/biomemgr.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/oremgr.lua")
 
-function amgmt.debug(text)
-	if DEBUG == true then print("[amgmt]:"..(text or "")) end
-end
-
-local function get_perlin_map(seed, octaves, persistance, scale, minp, maxp)
+local function get_perlin_map(np, minp, maxp)
 	local sidelen = maxp.x - minp.x +1
 	local pm = minetest.get_perlin_map(
-		{offset=0, scale=1, spread={x=scale, y=scale, z=scale}, seed=seed, octaves=octaves, persist=persistance},
+		{offset=0, scale=1, spread={x=np.c, y=np.c, z=np.c}, seed=np.s, octaves=np.o, persist=np.p},
 		{x=sidelen, y=sidelen, z=sidelen}
 	)
 	return pm:get2dMap_flat({x = minp.x, y = minp.z, z = 0})
 end
 
 -- noiseparam
-np = {
+amgmt.np = {
 --	s = seed, o = octaves, p = persistance, c = scale
 	b = {s = 1234, o = 6, p = 0.5, c = 512},
 	m = {s = 4321, o = 6, p = 0.5, c = 256},
@@ -45,6 +51,8 @@ np = {
 	d2 = {s = 4444, o = 7, p = 0.5, c = 512},
 	l = {s = 125, o = 6, p = 0.5, c = 256},
 }
+
+local np = amgmt.np
 
 --node id?
 local gci = minetest.get_content_id
@@ -135,15 +143,15 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		MaxEdge={x=emax.x, y=emax.y, z=emax.z},
 	}
 	local data = vm:get_data()
-	local base = get_perlin_map(np.b.s, np.b.o, np.b.p, np.b.c, minp, maxp) -- base height
-	local moun = get_perlin_map(np.m.s, np.m.o, np.m.p, np.m.c, minp, maxp) -- addition
-	local temp = get_perlin_map(np.t.s, np.t.o, np.t.p, np.t.c, minp, maxp) -- temperature (0-2)
-	local humi = get_perlin_map(np.h.s, np.h.o, np.h.p, np.h.c, minp, maxp) -- humidity (0-100)
-	local lake = get_perlin_map(np.l.s, np.l.o, np.l.p, np.l.c, minp, maxp) -- lake
-	local cav1 = get_perlin_map(np.c1.s, np.c1.o, np.c1.p, np.c1.c, minp, maxp) -- cave1
-	local dep1 = get_perlin_map(np.d1.s, np.d1.o, np.d1.p, np.d1.c, minp, maxp) -- deep1
-	local cav2 = get_perlin_map(np.c2.s, np.c2.o, np.c2.p, np.c2.c, minp, maxp) -- cave2
-	local dep2 = get_perlin_map(np.d2.s, np.d2.o, np.d2.p, np.d2.c, minp, maxp) -- deep2
+	local base = get_perlin_map(np.b, minp, maxp) -- base height
+	local moun = get_perlin_map(np.m, minp, maxp) -- addition
+	local temp = get_perlin_map(np.t, minp, maxp) -- temperature (0-2)
+	local humi = get_perlin_map(np.h, minp, maxp) -- humidity (0-100)
+	local lake = get_perlin_map(np.l, minp, maxp) -- lake
+	local cav1 = get_perlin_map(np.c1, minp, maxp) -- cave1
+	local dep1 = get_perlin_map(np.d1, minp, maxp) -- deep1
+	local cav2 = get_perlin_map(np.c2, minp, maxp) -- cave2
+	local dep2 = get_perlin_map(np.d2, minp, maxp) -- deep2
 	local fissure = minetest.get_perlin(3456, 6, 0.5, 360) -- fissure
 	local nizx = 0
 	for z = minp.z, maxp.z do
@@ -327,6 +335,22 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	end
 	amgmt.debug("tree planted")
 	
+	--[[
+	for z = minp.z, maxp.z do
+	for y = minp.y, maxp.y do
+		local vi = area:index(x,y,z)
+	for x = minp.x, maxp.x do
+		local pos = {x:x,y:y,z:z}
+		if data[vi] = c_dirt then
+			if minetest.find_node_near(pos, 3, {"default:dirt_with_grass"}) ~= nil then
+				data[vi] = c_dirt_grass
+			end
+		end
+	end
+	end
+	end
+	--]]
+	
 	amgmt.debug("applying map data")
 	vm:set_data(data)
 	vm:set_lighting({day=0, night=0})
@@ -344,8 +368,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 end)
 
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/hud.lua")
-
-print("[amgmt] (Another Map Generator for Minetest) Loaded")
 
 print("[amgmt]:"..amgmt.tree.count.." tree(s) registered")
 print("[amgmt]:"..(#amgmt.biome.list-1).." biome(s) registered") -- do not count NIL biome!
