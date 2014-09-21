@@ -32,6 +32,7 @@ local c_ignore = gci("ignore")
 local c_dirt_grass = gci("default:dirt_with_grass")
 local c_tree = gci("default:tree")
 local c_leaves = gci("default:leaves")
+local c_apple = gci("default:apple")
 local c_jungletree = gci("default:jungletree")
 local c_jungleleaves = gci("default:jungleleaves")
 local c_snow = gci("default:snow")
@@ -45,6 +46,56 @@ local function add_leaves(data, vi, c_leaf, other)
 end
 
 --normal tree
+function amgmt.tree.normal_tree(pos, data, area, seed, minp, maxp, pr)
+	local x, y, z = pos.x, pos.y, pos.z
+	local is_apple_tree = false
+	if pr:next(1,100) < 25 then
+		is_apple_tree = true
+	end
+	local th = pr:next(4,5)
+	
+	for yy = y, y+th do
+		local vi = area:index(x, yy, z)
+		data[vi] = c_tree
+	end
+	
+	local y = y + th - 1
+	
+	for xx = x-1, x+1 do
+	for yy = y-1, y+1 do
+	for zz = z-1, z+1 do
+		if area:contains(xx,yy,zz) then
+			local vi = area:index(xx, yy, zz)
+			if pr:next(1,100) > 25 then
+				add_leaves(data, vi, c_leaves)
+			else
+				if is_apple_tree == true then
+					add_leaves(data, vi, c_apple)
+				else
+					add_leaves(data, vi, c_leaves)
+				end
+			end
+		end
+	end
+	end
+	end
+	
+	for ii = 1, 8 do
+		local xx = x + pr:next(-2,2)
+		local yy = y + pr:next(-1,2)
+		local zz = z + pr:next(-2,2)
+		for xxx = 0, 1 do
+		for yyy = 0, 1 do
+		for zzz = 0, 1 do
+			if area:contains(xx+xxx, yy+yyy, zz+zzz) then
+				local vi = area:index(xx+xxx, yy+yyy, zz+zzz)
+				add_leaves(data, vi, c_leaves, c_leaves)
+			end
+		end
+		end
+		end
+	end
+end
 regtr({
 	name = "normal",
 	chance = 15,
@@ -52,44 +103,60 @@ regtr({
 	maxh = 85,
 	grows_on = "default:dirt_with_grass",
 	grow = function(pos, data, area, seed, minp, maxp, pr)
-		local x, y, z = pos.x, pos.y, pos.z
-		local th = pr:next(4,5)
-		
-		for yy = math.max(y,minp.y), math.min(y+th,maxp.y) do
-			local vi = area:index(x, yy, z)
-			data[vi] = c_tree
-		end
-		
-		local y = y + th - 1
-		
-		for xx = math.max(x-1,minp.x), math.min(x+1,maxp.x) do
-		for yy = math.max(y-1,minp.y), math.min(y+1,maxp.y) do
-		for zz = math.max(z-1,minp.z), math.min(z+1,maxp.z) do
-			local vi = area:index(xx, yy, zz)
-			add_leaves(data, vi, c_leaves)
-		end
-		end
-		end
-		
-		for ii = 1, 8 do
-			local xx = x + pr:next(-2,2)
-			local yy = y + pr:next(-1,2)
-			local zz = z + pr:next(-2,2)
-			for xxx = 0, 1 do
-			for yyy = 0, 1 do
-			for zzz = 0, 1 do
-				local vi = area:index(xx+xxx, yy+yyy, zz+zzz)
-				add_leaves(data, vi, c_leaves, c_leaves)
-			end
-			end
-			end
-		end
+		amgmt.tree.normal_tree(pos, data, area, seed, minp, maxp, pr)
 		
 		--amgmt.debug("normal tree spawned at:"..x..","..y..","..z)
 	end
 })
 
 --jungle tree
+function amgmt.tree.jungle_tree(pos, data, area, seed, minp, maxp, pr)
+	local x, y, z = pos.x, pos.y, pos.z
+	local th = pr:next(8,12)
+	
+	for zz = z-1, z+1,maxp.z do
+	for xx = x-1, x+1,maxp.x do
+		if pr:next(1,3) >= 2 and area:contains(xx,y,zz) then
+			local vi = area:index(xx, y, zz)
+			add_leaves(data, vi, c_jungletree)
+		end
+	end
+	end
+	
+	for yy = y, y+th do
+		local vi = area:index(x, yy, z)
+		data[vi] = c_jungletree
+	end
+	
+	local y = y + th - 1
+	
+	for xx = x-1, x+1 do
+	for yy = y-1, y+1 do
+	for zz = z-1, z+1 do
+		if area:contains(xx,yy,zz) then
+			local vi = area:index(xx, yy, zz)
+			add_leaves(data, vi, c_jungleleaves)
+		end
+	end
+	end
+	end
+	
+	for ii = 1, 30 do
+		local xx = x + pr:next(-3,3)
+		local yy = y + pr:next(-2,2)
+		local zz = z + pr:next(-3,3)
+		for xxx = 0, 1 do
+		for yyy = 0, 1 do
+		for zzz = 0, 1 do
+			if area:contains(xx+xxx, yy+yyy, zz+zzz) then
+				local vi = area:index(xx+xxx, yy+yyy, zz+zzz)
+				add_leaves(data, vi, c_jungleleaves, c_jungleleaves)
+			end
+		end
+		end
+		end
+	end
+end
 regtr({
 	name = "jungle",
 	chance = 10,
@@ -97,53 +164,53 @@ regtr({
 	maxh = 85,
 	grows_on = "default:dirt_with_grass",
 	grow = function(pos, data, area, seed, minp, maxp, pr)
-		local x, y, z = pos.x, pos.y, pos.z
-		local th = pr:next(8,12)
-		
-		for zz = math.max(z-1,minp.z), math.min(z+1,maxp.z) do
-		for xx = math.max(x-1,minp.x), math.min(x+1,maxp.x) do
-			if pr:next(1,3) >= 2 then
-				local vi = area:index(xx, y, zz)
-				add_leaves(data, vi, c_jungletree)
-			end
-		end
-		end
-		
-		for yy = math.max(y,minp.y), math.min(y+th,maxp.y) do
-			local vi = area:index(x, yy, z)
-			data[vi] = c_jungletree
-		end
-		
-		local y = y + th - 1
-		
-		for xx = math.max(x-1,minp.x), math.min(x+1,maxp.x) do
-		for yy = math.max(y-1,minp.y), math.min(y+1,maxp.y) do
-		for zz = math.max(z-1,minp.z), math.min(z+1,maxp.z) do
-			local vi = area:index(xx, yy, zz)
-			add_leaves(data, vi, c_jungleleaves)
-		end
-		end
-		end
-		
-		for ii = 1, 30 do
-			local xx = x + pr:next(-3,3)
-			local yy = y + pr:next(-2,2)
-			local zz = z + pr:next(-3,3)
-			for xxx = 0, 1 do
-			for yyy = 0, 1 do
-			for zzz = 0, 1 do
-				local vi = area:index(xx+xxx, yy+yyy, zz+zzz)
-				add_leaves(data, vi, c_jungleleaves, c_jungleleaves)
-			end
-			end
-			end
-		end
+		amgmt.tree.jungle_tree(pos, data, area, seed, minp, maxp, pr)
 		
 		--amgmt.debug("jungle tree spawned at:"..x..","..y..","..z)
 	end
 })
 
 --savanna tree
+local c_savanna_tree = gci("amgmt:savanna_tree")
+local c_savanna_leaves = gci("amgmt:savanna_leaves")
+function amgmt.tree.savanna_tree(pos, data, area, seed, minp, maxp, pr)
+	local x, y, z = pos.x, pos.y, pos.z
+	local th = pr:next(7,11)
+	
+	for yy = y, y+th do
+		local vi = area:index(x, yy, z)
+		data[vi] = c_savanna_tree
+	end
+	y = y+th-1
+	
+	for xx = x-1, x+1 do
+	for yy = y-1, y+1 do
+	for zz = z-1, z+1 do
+		if area:contains(xx,yy,zz) then
+			local vi = area:index(xx, yy, zz)
+			add_leaves(data, vi, c_savanna_leaves)
+		end
+	end
+	end
+	end
+	
+	for ii = 1, 12 do
+		local xx = x + pr:next(-2,2)
+		local yy = y + pr:next(-2,2)
+		local zz = z + pr:next(-2,2)
+		
+		for xxx = 0, 1 do
+		for yyy = 0, 1 do
+		for zzz = 0, 1 do
+			if area:contains(xx+xxx, yy+yyy, zz+zzz) then
+				local vi = area:index(xx+xxx, yy+yyy, zz+zzz)
+				add_leaves(data, vi, c_savanna_leaves, c_leaves)
+			end
+		end
+		end
+		end
+	end
+end
 regtr({
 	name = "savanna",
 	chance = 225,
@@ -151,44 +218,42 @@ regtr({
 	maxh = 85,
 	grows_on = "amgmt:dirt_at_savanna",
 	grow = function(pos, data, area, seed, minp, maxp, pr)
-		local x, y, z = pos.x, pos.y, pos.z
-		local th = pr:next(7,11)
-		
-		for yy = math.max(y,minp.y), math.min(y+th,maxp.y) do
-			local vi = area:index(x, yy, z)
-			data[vi] = c_tree
-		end
-		y = y+th-1
-		
-		for xx = math.max(x-1,minp.x), math.min(x+1,maxp.x) do
-		for yy = math.max(y-1,minp.y), math.min(y+1,maxp.y) do
-		for zz = math.max(z-1,minp.z), math.min(z+1,maxp.z) do
-			local vi = area:index(xx, yy, zz)
-			add_leaves(data, vi, c_leaves)
-		end
-		end
-		end
-		
-		for ii = 1, 12 do
-			local xx = x + pr:next(-2,2)
-			local yy = y + pr:next(-2,2)
-			local zz = z + pr:next(-2,2)
-			
-			for xxx = 0, 1 do
-			for yyy = 0, 1 do
-			for zzz = 0, 1 do
-				local vi = area:index(xx+xxx, yy+yyy, zz+zzz)
-				add_leaves(data, vi, c_leaves, c_leaves)
-			end
-			end
-			end
-		end
+		amgmt.tree.savanna_tree(pos, data, area, seed, minp, maxp, pr)
 		
 		--amgmt.debug("savanna tree spawned at:"..x..","..y..","..z)
 	end
 })
 
+local c_pine_tree = gci("amgmt:pine_tree")
+local c_pine_leaves = gci("amgmt:pine_leaves")
 --pine tree at cold taiga
+function amgmt.tree.pine_cold_tree(pos, data, area, seed, minp, maxp, pr)
+	local x, y, z = pos.x, pos.y, pos.z
+	local th = pr:next(8,9)
+	
+	for yy = y, y+th do
+		local vi = area:index(x, yy, z)
+		data[vi] = c_pine_tree
+	end
+	
+	for xx = x-1, x+1 do
+	for yy = 1, 3 do
+	for zz = z-1, z+1 do
+		if area:contains(xx, y+(yy*2)+1, zz) then
+			local vi = area:index(xx, y+(yy*2)+1, zz)
+			add_leaves(data, vi, c_pine_leaves)
+			local vi = area:index(xx, y+(yy*2)+2, zz)
+			add_leaves(data, vi, c_snow)
+		end
+	end
+	end
+	end
+	
+	local vi = area:index(x, y+th+1, z)
+	add_leaves(data, vi, c_pine_leaves)
+	local vi = area:index(x, y+th+2, z)
+	add_leaves(data, vi, c_snow)
+end
 regtr({
 	name = "pine_cold",
 	chance = 40,
@@ -196,42 +261,36 @@ regtr({
 	maxh = 100,
 	grows_on = "default:dirt_with_snow",
 	grow = function(pos, data, area, seed, minp, maxp, pr)
-		local x, y, z = pos.x, pos.y, pos.z
-		local th = pr:next(5,8)
-		
-		for yy = math.max(y,minp.y), math.min(y+th,maxp.y) do
-			local vi = area:index(x, yy, z)
-			data[vi] = c_tree
-		end
-		
-		for xx = math.max(x-2,minp.x), math.min(x+2,maxp.x) do
-		for zz = math.max(z-2,minp.z), math.min(z+2,maxp.z) do
-			local vi = area:index(xx, y+3, zz)
-			add_leaves(data, vi, c_leaves)
-			local vi = area:index(xx, y+4, zz)
-			add_leaves(data, vi, c_snow)
-		end
-		end
-		
-		local vi = area:index(x, y+th+1, z)
-		add_leaves(data, vi, c_leaves)
-		local vi = area:index(x, y+th+2, z)
-		add_leaves(data, vi, c_snow)
-		
-		for xx = math.max(x-1,minp.x), math.min(x+1,maxp.x) do
-		for zz = math.max(z-1,minp.z), math.min(z+1,maxp.z) do
-			local vi = area:index(xx, y+th, zz)
-			add_leaves(data, vi, c_leaves)
-			local vi = area:index(xx, y+th+1, zz)
-			add_leaves(data, vi, c_snow)
-		end
-		end
+		amgmt.tree.pine_cold_tree(pos, data, area, seed, minp, maxp, pr)
 		
 		--amgmt.debug("pine tree spawned at:"..x..","..y..","..z)
 	end
 })
 
 --pine tree at taiga
+function amgmt.tree.pine_tree(pos, data, area, seed, minp, maxp, pr)
+	local x, y, z = pos.x, pos.y, pos.z
+	local th = pr:next(8,9)
+	
+	for yy = y, y+th do
+		local vi = area:index(x, yy, z)
+		data[vi] = c_pine_tree
+	end
+	
+	for xx = x-1, x+1 do
+	for yy = 1, 3 do
+	for zz = z-1, z+1 do
+		if area:contains(xx, y+(yy*2)+1, zz) then
+			local vi = area:index(xx, y+(yy*2)+1, zz)
+			add_leaves(data, vi, c_pine_leaves)
+		end
+	end
+	end
+	end
+	
+	local vi = area:index(x, y+th+1, z)
+	add_leaves(data, vi, c_pine_leaves)
+end
 regtr({
 	name = "pine_taiga",
 	chance = 40,
@@ -239,30 +298,7 @@ regtr({
 	maxh = 100,
 	grows_on = "default:dirt_with_grass",
 	grow = function(pos, data, area, seed, minp, maxp, pr)
-		local x, y, z = pos.x, pos.y, pos.z
-		local th = pr:next(5,8)
-		
-		for yy = math.max(y,minp.y), math.min(y+th,maxp.y) do
-			local vi = area:index(x, yy, z)
-			data[vi] = c_tree
-		end
-		
-		for xx = math.max(x-2,minp.x), math.min(x+2,maxp.x) do
-		for zz = math.max(z-2,minp.z), math.min(z+2,maxp.z) do
-			local vi = area:index(xx, y+3, zz)
-			add_leaves(data, vi, c_leaves)
-		end
-		end
-		
-		for xx = math.max(x-1,minp.x), math.min(x+1,maxp.x) do
-		for zz = math.max(z-1,minp.z), math.min(z+1,maxp.z) do
-			local vi = area:index(xx, y+th, zz)
-			add_leaves(data, vi, c_leaves)
-		end
-		end
-		
-		local vi = area:index(x, y+th+1, z)
-		add_leaves(data, vi, c_leaves)
+		amgmt.tree.pine_tree(pos, data, area, seed, minp, maxp, pr)
 		
 		--amgmt.debug("pine tree spawned at:"..x..","..y..","..z)
 	end

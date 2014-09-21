@@ -1,22 +1,16 @@
--- Another Map Generator for Minetest [amgmt]
--- Made by srifqi
+-- Another Map Generator for Minetest [amgmt] by srifqi
 -- License: CC0 1.0 Universal
 -- Dependencies: default, flowers
 
 amgmt = {}
 print("[amgmt] (Another Map Generator for Minetest)")
 
-minetest.register_on_mapgen_init(function(mgparams)
-	minetest.set_mapgen_params({mgname="singlenode"})
-end)
-
 --param?
 DEBUG = true -- turn this off if your debug.txt is too full
-wl = 0
+wl = 0 -- water level
 HMAX = 500
 HMIN = -30000
-BEDROCK = -4999
-BEDROCK2 = -29999
+BEDROCK = -29999 -- bedrock level
 
 function amgmt.debug(text)
 	if DEBUG == true then print("[amgmt]:"..(text or "")) end
@@ -28,6 +22,11 @@ dofile(minetest.get_modpath(minetest.get_current_modname()).."/nodes.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/trees.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/biomemgr.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/oremgr.lua")
+
+minetest.register_on_mapgen_init(function(mgparams)
+	amgmt.seed = mgparams.seed
+	minetest.set_mapgen_params({mgname="singlenode", flags="nolight"})
+end)
 
 local function get_perlin_map(np, minp, maxp)
 	local sidelen = maxp.x - minp.x +1
@@ -45,11 +44,9 @@ amgmt.np = {
 	m = {s = 4321, o = 6, p = 0.5, c = 256},
 	t = {s = 5678, o = 7, p = 0.5, c = 512},
 	h = {s = 8765, o = 7, p = 0.5, c = 512},
-	c1 = {s = 1111, o = 7, p = 0.5, c = 512},
-	d1 = {s = 2222, o = 7, p = 0.5, c = 512},
-	c2 = {s = 3333, o = 7, p = 0.5, c = 512},
-	d2 = {s = 4444, o = 7, p = 0.5, c = 512},
 	l = {s = 125, o = 6, p = 0.5, c = 256},
+	c = {s = 1024, o = 7, p = 0.5, c = 512},
+	d = {s = 2048, o = 7, p = 0.5, c = 512},
 }
 
 local np = amgmt.np
@@ -101,7 +98,12 @@ local function build_cave_segment(x, y, z, data, area, shape, radius, deletednod
 		for yy = -radius, radius do
 		for xx = -radius, radius do
 			local vi = area:index(x+xx,y+yy,z+zz)
-			if data[vi] == deletednodes and distance3(x,y,z,x+xx,y+yy,z+zz) <= radius then 
+			local via = area:index(x+xx,y+yy+1,z+zz)
+			if
+				data[vi] == deletednodes and
+				distance3(x,y,z,x+xx,y+yy,z+zz) <= radius and
+				data[via] == deletednodes 
+			then
 				data[vi] = c_air
 			end
 		end
@@ -112,7 +114,8 @@ local function build_cave_segment(x, y, z, data, area, shape, radius, deletednod
 		for yy = -radius, radius do
 		for xx = -radius, radius do
 			local vi = area:index(x+xx,y+yy,z+zz)
-			if data[vi] == deletednodes then 
+			local via = area:index(x+xx,y+yy+1,z+zz)
+			if data[vi] == deletednodes and data[via] == deletednodes then
 				data[vi] = c_air
 			end
 		end
@@ -124,7 +127,8 @@ local function build_cave_segment(x, y, z, data, area, shape, radius, deletednod
 			if distance2(x,z,x+xx,z+zz) <= radius then
 				for yy = -radius, radius do
 					local vi = area:index(x+xx,y+yy,z+zz)
-					if data[vi] == deletednodes then 
+					local via = area:index(x+xx,y+yy+1,z+zz)
+					if data[vi] == deletednodes and data[via] == deletednodes then
 						data[vi] = c_air
 					end
 				end
@@ -143,16 +147,29 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		MaxEdge={x=emax.x, y=emax.y, z=emax.z},
 	}
 	local data = vm:get_data()
+	
+	--noise
 	local base = get_perlin_map(np.b, minp, maxp) -- base height
 	local moun = get_perlin_map(np.m, minp, maxp) -- addition
 	local temp = get_perlin_map(np.t, minp, maxp) -- temperature (0-2)
 	local humi = get_perlin_map(np.h, minp, maxp) -- humidity (0-100)
 	local lake = get_perlin_map(np.l, minp, maxp) -- lake
-	local cav1 = get_perlin_map(np.c1, minp, maxp) -- cave1
-	local dep1 = get_perlin_map(np.d1, minp, maxp) -- deep1
-	local cav2 = get_perlin_map(np.c2, minp, maxp) -- cave2
-	local dep2 = get_perlin_map(np.d2, minp, maxp) -- deep2
+	
+	local cave = {} -- list of caves
+	local deep = {} -- list of cave deepness
+	for o = 1, 10 do
+		local cnp = np.c
+		cnp.s = cnp.s + o
+		cave[o] = get_perlin_map(cnp, minp, maxp)
+		local dnp = np.d
+		dnp.s = dnp.s + o
+		deep[o] = get_perlin_map(dnp, minp, maxp)
+	end
+	
 	local fissure = minetest.get_perlin(3456, 6, 0.5, 360) -- fissure
+	amgmt.debug("noise calculated")
+	
+	--terraforming
 	local nizx = 0
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
@@ -174,17 +191,19 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 			-- world height limit :(
 			if y_ < HMIN or y_ > HMAX then
 				-- air
-			elseif y_ == BEDROCK or y_ == BEDROCK2 then
+			elseif y_ == BEDROCK then
 				data[vi] = c_bedrock
 			--
 			-- fissure
 			elseif math.abs(fissure:get3d({x=x,y=y_,z=z})) < 0.0045 then
-				data[vi] = c_air
+				-- air
 			--]]
 			-- biome
 			else
-				--data[vi] = c_air
-				data[vi] = amgmt.biome.get_block_by_temp_humi(temp_, humi_, base_, wl, y_, x, z)
+				local node = amgmt.biome.get_block_by_temp_humi(temp_, humi_, base_, wl, y_, x, z)
+				if node ~= c_air then
+					data[vi] = node
+				end
 			end
 		end
 	end
@@ -200,33 +219,31 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
 		nizx = nizx + 1
-		local cav1_ = math.abs(cav1[nizx])
-		local dep1_ = dep1[nizx] * 30 + 5
-		local cav2_ = math.abs(cav2[nizx])
-		local dep2_ = dep2[nizx] * 50 - 25
 		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
-		--amgmt.debug(x..","..z..":"..cav1_..","..dep1_..","..cav2_..","..dep2_)
 		
-		if cav1_ < 0.015 or cav1_ > 1-0.015 then
-			local y = math.floor(wl + dep1_ + 0.5)
-			local shape = (base_%3) + 1
-			build_cave_segment(x, y, z, data, area, shape, 1, c_stone)
-			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt)
-			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_grass)
-			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_snow)
-			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_savanna)
-			--amgmt.debug("cave generated at:"..x..","..y..","..z)
-		end
-		
-		if cav2_ < 0.015 or cav2_ > 1-0.015 then
-			local y = math.floor(wl - dep2_ - 0.5)
-			local shape = (base_%3) + 1
-			build_cave_segment(x, y, z, data, area, shape, 1, c_stone)
-			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt)
-			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_grass)
-			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_snow)
-			build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_savanna)
-			--amgmt.debug("cave generated at:"..x..","..y..","..z)
+		for o = 1, 10 do
+			local cave_ = (cave[o][nizx]+1)/2
+			local deep_ = deep[o][nizx]
+			if o < 4 then
+				deep_ = deep_ * 30 + 5
+			elseif o < 7 then
+				deep_ = deep_ * 50 - 25
+			else
+				deep_ = deep_ * 50 - 45
+			end
+			
+			if cave_ < 0.001 or cave_ > 1-0.001 then
+				local y = math.floor(wl + deep_ + 0.5)
+				local shape = (base_%3) + 1
+				build_cave_segment(x, y, z, data, area, shape, 1, c_stone)
+				build_cave_segment(x, y, z, data, area, shape, 1, c_dirt)
+				build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_grass)
+				build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_snow)
+				build_cave_segment(x, y, z, data, area, shape, 1, c_dirt_savanna)
+				build_cave_segment(x, y, z, data, area, shape, 1, c_sandstone)
+				build_cave_segment(x, y, z, data, area, shape, 1, c_sand)
+				--amgmt.debug("cave generated at:"..x..","..y..","..z)
+			end
 		end
 	end
 	end
@@ -239,9 +256,9 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	for cx = 0, chulen-1 do
 	nizx = (cz*chulen + cx) * 16
 	local found_lake = false
-	for z = minp.z + cz*16, minp.z + (cz+1)*16 do
+	for z = minp.z + cz*16 +3, minp.z + (cz+1)*16 -3 do -- +-3 for lake borders
 	if found_lake == true then break end
-	for x = minp.x + cx*16, minp.x + (cx+1)*16 do
+	for x = minp.x + cx*16 +3, minp.x + (cx+1)*16 -3 do -- +-3 for lake borders
 		if found_lake == true then break end
 		nizx = nizx + 1
 		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
@@ -292,6 +309,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	end
 	amgmt.debug("lake formed")
 	
+	--
 	--tree planting
 	local nizx = 0
 	for z = minp.z, maxp.z do
@@ -308,12 +326,12 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 			humi_ = math.abs(humi[nizx] * 100)
 		end
 		base_ = get_base(base_, temp_, humi_)
-		local biome__ = amgmt.biome.list[amgmt.biome.get_by_temp_humi(temp_,humi_)[1]]
+		local biome__ = amgmt.biome.list[ amgmt.biome.get_by_temp_humi(temp_,humi_)[1] ]
 		local tr = biome__.trees
 		local filled = false
 		for i = 1, #tr do
 			if filled == true then break end
-			local tri = amgmt.tree.registered[tr[i][1]] or amgmt.tree.registered["nil"]
+			local tri = amgmt.tree.registered[ tr[i][1] ] or amgmt.tree.registered["nil"]
 			local chance = tr[i][2] or 1024
 			if
 				pr:next(1,chance) == 1 and
@@ -334,21 +352,6 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	end
 	end
 	amgmt.debug("tree planted")
-	
-	--[[
-	for z = minp.z, maxp.z do
-	for y = minp.y, maxp.y do
-		local vi = area:index(x,y,z)
-	for x = minp.x, maxp.x do
-		local pos = {x:x,y:y,z:z}
-		if data[vi] = c_dirt then
-			if minetest.find_node_near(pos, 3, {"default:dirt_with_grass"}) ~= nil then
-				data[vi] = c_dirt_grass
-			end
-		end
-	end
-	end
-	end
 	--]]
 	
 	amgmt.debug("applying map data")
@@ -366,6 +369,80 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
 	amgmt_generate(minp, maxp, seed, vm, emin, emax)
 end)
+
+local function amgmt_regenerate(pos, name)
+	minetest.chat_send_all("Regenerating "..name.."'s map chunk...")
+	local minp = {x = 80*math.floor((pos.x+32)/80)-32,
+			y = 80*math.floor((pos.y+32)/80)-32,
+			z = 80*math.floor((pos.z+32)/80)-32}
+	local maxp = {x = minp.x+79, y = minp.y+79, z = minp.z+79}
+	local vm = minetest.get_voxel_manip()
+	local emin, emax = vm:read_from_map(minp, maxp)
+	local data = {}
+	for i = 1, (maxp.x-minp.x+1)*(maxp.y-minp.y+1)*(maxp.z-minp.z+1) do
+		data[i] = c_air
+	end
+	vm:set_data(data)
+	vm:write_to_map()
+	amgmt_generate(minp, maxp, amgmt.seed or os.clock(), vm, emin, emax)
+	
+	minetest.chat_send_player(name, "Regenerating done, fixing lighting. This may take a while...")
+	-- Fix lighting
+	local nodes = minetest.find_nodes_in_area(minp, maxp, "air")
+	local nnodes = #nodes
+	local p = math.floor(nnodes/5)
+	local dig_node = minetest.dig_node
+	for _, pos in ipairs(nodes) do
+		dig_node(pos)
+		if _%p == 0 then
+			minetest.chat_send_player(name, math.floor(_/nnodes*100).."%")
+		end
+	end
+	minetest.chat_send_all("Done")
+end
+
+minetest.register_chatcommand("amgmt_regenerate", {
+	privs = {server = true},
+	func = function(name, param)
+		local player = minetest.get_player_by_name(name)
+		if player then
+			local pos = player:getpos()
+			amgmt_regenerate(pos, name)
+		end
+	end,
+})
+
+local function amgmt_fixlight(pos, name)
+	minetest.chat_send_player(name, "Fixing lightning. This may take a while...")
+	local minp = {x = 80*math.floor((pos.x+32)/80)-32,
+			y = 80*math.floor((pos.y+32)/80)-32,
+			z = 80*math.floor((pos.z+32)/80)-32}
+	local maxp = {x = minp.x+79, y = minp.y+79, z = minp.z+79}
+	
+	-- Fix lighting
+	local nodes = minetest.find_nodes_in_area(minp, maxp, "air")
+	local nnodes = #nodes
+	local p = math.floor(nnodes/5)
+	local dig_node = minetest.dig_node
+	for _, pos in ipairs(nodes) do
+		dig_node(pos)
+		if _%p == 0 then
+			minetest.chat_send_player(name, math.floor(_/nnodes*100).."%")
+		end
+	end
+	minetest.chat_send_all("Done")
+end
+
+minetest.register_chatcommand("amgmt_fixlight", {
+	privs = {server = true},
+	func = function(name, param)
+		local player = minetest.get_player_by_name(name)
+		if player then
+			local pos = player:getpos()
+			amgmt_fixlight(pos, name)
+		end
+	end,
+})
 
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/hud.lua")
 

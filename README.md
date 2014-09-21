@@ -13,11 +13,19 @@ CC0 1.0 Universal
 - flowers
 
 ##Feature
-- 15 biome
+- 16 biome
 - Biomes, Trees, Nodes, Ores, etc. are modifyable
 - Experimental water lakes!
+- 'Moreores' mod support
 - New caving system! (May intersect with fissure)
-- Using 9 2D perlin noise and 1 3D perlin noise
+- Using 25 2D perlin noise and 1 3D perlin noise
+
+##Noise usage
+- 2 noise for height
+- 2 noise for temperature and humidity
+- 1 noise for experimental water lake
+- 10 noise for caves
+- 10 noise for cave deepness
 
 ##List of Biomes
 - Frozen River
@@ -31,6 +39,7 @@ CC0 1.0 Universal
 - Plains
 - Flower Plains
 - River
+- Swampland
 - Forest
 - Jungle
 - Savanna

@@ -34,7 +34,7 @@ badd({
 			return c_ice
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_sandstone
 		else
 			return c_sand
@@ -55,7 +55,7 @@ badd({
 			return c_water
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_sandstone
 		else
 			return c_sand
@@ -85,7 +85,7 @@ badd({
 			end
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_dirt
 		else
 			if y < wl then
@@ -116,7 +116,7 @@ badd({
 			end
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_dirt
 		else
 			if y < wl then
@@ -145,7 +145,7 @@ badd({
 			end
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_dirt
 		else
 			if y < wl then
@@ -224,7 +224,7 @@ badd({
 			end
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_dirt
 		else
 			if y < wl then
@@ -253,7 +253,7 @@ badd({
 			end
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_dirt
 		else
 			if y < wl then
@@ -283,7 +283,7 @@ badd({
 			end
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_dirt
 		else
 			if y < wl then
@@ -316,7 +316,7 @@ badd({
 			end
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_dirt
 		else
 			if y < wl then
@@ -328,12 +328,47 @@ badd({
 	end
 })
 badd({
+	name = "Swampland",
+	mint = 1.25,
+	maxt = 1.5,
+	minh = 45,
+	maxh = 55,
+	trees = {{"normal",27},{"grass14",16}},
+	get_block = function(temp, humi, base_, wl, y)
+		local base = base_
+		if base_ < 5 and base_ > -1 then base = base % 2 - 1 end
+		if y > base and y > wl then
+			return c_air
+		elseif y > base and y <= wl then
+			if base < wl then
+				return c_water
+			elseif base >= wl then
+				return c_air
+			end
+		elseif y < base - 2 then
+			return c_stone
+		elseif y < base and y >= base - 3 then
+			return c_dirt
+		else
+			if y < wl then
+				return c_dirt
+			else
+				if temp > 1.6 and base == wl then
+					return c_sand
+				else
+					return c_dirt_grass
+				end
+			end
+		end
+	end
+})
+badd({
 	name = "Forest",
 	mint = 1.25,
 	maxt = 1.5,
 	minh = 0,
 	maxh = 95,
-	trees = {{"normal",15},{"grass14",60},{"grass35",5},{"papyrus",15},{"flowers",15}},
+	trees = {{"normal",19},{"grass14",60},{"grass35",5},{"papyrus",16},{"flowers",18}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
 			return c_air
@@ -345,7 +380,7 @@ badd({
 			end
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_dirt
 		else
 			if y < wl then
@@ -374,7 +409,7 @@ badd({
 			end
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_dirt
 		else
 			if y < wl then
@@ -402,7 +437,7 @@ badd({
 			end
 		elseif y < base - 2 then
 			return c_stone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_dirt
 		else
 			if y < wl then
@@ -434,7 +469,7 @@ badd({
 			end
 		elseif y < base - 2 then
 			return c_sandstone
-		elseif y < base and y > base - 3 then
+		elseif y < base and y >= base - 3 then
 			return c_sand
 		else
 			return c_sand
