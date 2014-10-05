@@ -42,6 +42,7 @@ amgmt.np = {
 --	s = seed, o = octaves, p = persistance, c = scale
 	b = {s = 1234, o = 6, p = 0.5, c = 512},
 	m = {s = 4321, o = 6, p = 0.5, c = 256},
+	f = {s = 3456, o = 6, p = 0.5, c = 360},
 	t = {s = 5678, o = 7, p = 0.5, c = 512},
 	h = {s = 8765, o = 7, p = 0.5, c = 512},
 	l = {s = 125, o = 6, p = 0.5, c = 256},
@@ -157,7 +158,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	
 	local cave = {} -- list of caves
 	local deep = {} -- list of cave deepness
-	for o = 1, 10 do
+	for o = 1, 5 do
 		local cnp = np.c
 		cnp.s = cnp.s + o
 		cave[o] = get_perlin_map(cnp, minp, maxp)
@@ -166,14 +167,23 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		deep[o] = get_perlin_map(dnp, minp, maxp)
 	end
 	
-	local fissure = minetest.get_perlin(3456, 6, 0.5, 360) -- fissure
+	local sidelen = maxp.x - minp.x +1
+	local fissure = minetest.get_perlin_map({ -- fissure
+			offset=0, scale=1,
+			spread={x=np.f.c, y=np.f.c, z=np.f.c},
+			seed=np.f.s, octaves=np.f.o, persist=np.f.p
+		},
+		{x=sidelen, y=sidelen, z=sidelen}
+	):get3dMap_flat(minp)
 	amgmt.debug("noise calculated")
 	
 	--terraforming
 	local nizx = 0
+	local nizyx = 0
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
 		nizx = nizx + 1
+		nizyx = nizyx + 1
 		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
 		local temp_ = 0
 		local humi_ = 0
@@ -187,6 +197,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		base_ = get_base(base_, temp_, humi_)
 		--amgmt.debug(x..","..z.." : "..temp_)
 		for y_ = minp.y, maxp.y do
+			nizyx = nizyx + sidelen
 			local vi = area:index(x,y_,z)
 			-- world height limit :(
 			if y_ < HMIN or y_ > HMAX then
@@ -195,7 +206,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 				data[vi] = c_bedrock
 			--
 			-- fissure
-			elseif math.abs(fissure:get3d({x=x,y=y_,z=z})) < 0.0045 then
+			elseif math.abs(fissure[nizyx]) < 0.0045 then
 				-- air
 			--]]
 			-- biome
@@ -206,6 +217,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 				end
 			end
 		end
+		nizyx = nizyx - (sidelen * sidelen)
 	end
 	end
 	amgmt.debug("terrain generated")
@@ -221,12 +233,12 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		nizx = nizx + 1
 		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
 		
-		for o = 1, 10 do
+		for o = 1, 5 do
 			local cave_ = (cave[o][nizx]+1)/2
 			local deep_ = deep[o][nizx]
-			if o < 4 then
+			if o < 2 then
 				deep_ = deep_ * 30 + 5
-			elseif o < 7 then
+			elseif o < 4 then
 				deep_ = deep_ * 50 - 25
 			else
 				deep_ = deep_ * 50 - 45
