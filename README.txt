@@ -1,18 +1,17 @@
 amgmt
-=====
 
 Another Map Generator mod for Minetest
 
 Still experimental!
 
-##License
+#License
 CC0 1.0 Universal
 
-##Dependencies
+#Dependencies
 - default
 - flowers
 
-##Feature
+#Feature
 - 16 biome
 - Biomes, Trees, Nodes, Ores, etc. are modifyable
 - Experimental water lakes!
@@ -20,7 +19,7 @@ CC0 1.0 Universal
 - New caving system! (May intersect with fissure)
 - Using 15 2D perlin noise and 1 3D perlin noise
 
-##Noise usage
+#Noise usage
 - 2 noise for height
 - 1 noise for fissure
 - 2 noise for temperature and humidity
@@ -28,7 +27,7 @@ CC0 1.0 Universal
 - 5 noise for caves
 - 5 noise for cave deepness
 
-##List of Biomes
+#List of Biomes
 - Frozen River
 - Ice Plains
 - Ice Plains Spikes
