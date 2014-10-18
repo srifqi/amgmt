@@ -17,12 +17,11 @@ CC0 1.0 Universal
 - Biomes, Trees, Nodes, Ores, etc. are modifyable
 - Experimental water lakes!
 - 'Moreores' mod support
-- New caving system! (May intersect with fissure)
-- Using 15 2D perlin noise and 1 3D perlin noise
+- New caving system!
+- Using 15 2D perlin noise
 
 ##Noise usage
-- 2 noise for height
-- 1 noise for fissure
+- 2 noise for terrain
 - 2 noise for temperature and humidity
 - 1 noise for experimental water lake
 - 5 noise for caves

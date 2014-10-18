@@ -21,7 +21,7 @@ local c_dirt_savanna = gci("amgmt:dirt_at_savanna")
 badd({
 	name = "Frozen River",
 	mint = 0,
-	maxt = 0.4,
+	maxt = 0.2,
 	minh = 47.5,
 	maxh = 52.5,
 	get_block = function(temp, humi, base, wl, y)
@@ -43,7 +43,7 @@ badd({
 })
 badd({
 	name = "River",
-	mint = 0.4,
+	mint = 0.2,
 	maxt = 2.0,
 	minh = 47.5,
 	maxh = 52.5,
@@ -64,12 +64,13 @@ badd({
 })
 
 --listing biome from cold to hot
+
 -- cold
 badd({
 	name = "Ice Plains",
 	mint = 0,
 	maxt = 0.2,
-	minh = 0,
+	minh = 30,
 	maxh = 50,
 	trees = {{"pine",225}},
 	get_block = function(temp, humi, base, wl, y)
@@ -101,7 +102,7 @@ badd({
 	mint = 0,
 	maxt = 0.2,
 	minh = 50,
-	maxh = 100,
+	maxh = 70,
 	trees = {{"ice_spike",25}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -129,8 +130,8 @@ badd({
 })
 badd({
 	name = "Cold Taiga",
-	mint = 0.2,
-	maxt = 0.4,
+	mint = 0,
+	maxt = 0.2,
 	trees = {{"pine_cold",25}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -158,10 +159,10 @@ badd({
 })
 badd({
 	name = "Gravel Plain",
-	mint = 0.4,
-	maxt = 0.5,
-	minh = 67,
-	maxh = 100,
+	mint = 0.2,
+	maxt = 0.4,
+	minh = 40,
+	maxh = 60,
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
 			return c_air
@@ -189,10 +190,8 @@ badd({
 })
 badd({
 	name = "Stone Plain",
-	mint = 0.4,
-	maxt = 0.5,
-	minh = 0,
-	maxh = 67,
+	mint = 0.2,
+	maxt = 0.4,
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
 			return c_air
@@ -209,8 +208,8 @@ badd({
 })
 badd({
 	name = "Extreme Hills",
-	mint = 0.5,
-	maxt = 0.8,
+	mint = 0.4,
+	maxt = 0.7,
 	trees = {{"grass_extreme",30}},
 	get_block = function(temp, humi, base_, wl, y)
 		local base = base_ + math.ceil(math.abs(base_ - wl) * 1/5)
@@ -239,7 +238,7 @@ badd({
 })
 badd({
 	name = "Taiga",
-	mint = 0.8,
+	mint = 0.7,
 	maxt = 1.0,
 	trees = {{"pine_taiga",25}},
 	get_block = function(temp, humi, base, wl, y)
@@ -266,11 +265,40 @@ badd({
 })
 -- medium/lush
 badd({
+	name = "Flower Plains",
+	mint = 1.0,
+	maxt = 1.2,
+	minh = 40,
+	maxh = 60,
+	trees = {{"flowers",5},{"flowers",5},{"flowers",5}},
+	get_block = function(temp, humi, base, wl, y)
+		if y > base and y > wl then
+			return c_air
+		elseif y > base and y <= wl then
+			if base < wl then
+				return c_water
+			elseif base >= wl then
+				return c_air
+			end
+		elseif y < base - 2 then
+			return c_stone
+		elseif y < base and y >= base - 3 then
+			return c_dirt
+		else
+			if y < wl then
+				return c_dirt
+			else
+				return c_dirt_grass
+			end
+		end
+	end
+})
+badd({
 	name = "Plains",
 	mint = 1.0,
-	maxt = 1.25,
+	maxt = 1.2,
 	minh = 0,
-	maxh = 50,
+	maxh = 100,
 	trees = {{"grass14",30}, {"grass35",5},{"papyrus",15},{"flowers",15}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -299,40 +327,11 @@ badd({
 	end
 })
 badd({
-	name = "Flower Plains",
-	mint = 1.0,
-	maxt = 1.25,
-	minh = 50,
-	maxh = 100,
-	trees = {{"flowers",5},{"flowers",5},{"flowers",5}},
-	get_block = function(temp, humi, base, wl, y)
-		if y > base and y > wl then
-			return c_air
-		elseif y > base and y <= wl then
-			if base < wl then
-				return c_water
-			elseif base >= wl then
-				return c_air
-			end
-		elseif y < base - 2 then
-			return c_stone
-		elseif y < base and y >= base - 3 then
-			return c_dirt
-		else
-			if y < wl then
-				return c_dirt
-			else
-				return c_dirt_grass
-			end
-		end
-	end
-})
-badd({
 	name = "Swampland",
-	mint = 1.25,
-	maxt = 1.5,
-	minh = 45,
-	maxh = 55,
+	mint = 1.2,
+	maxt = 1.4,
+	minh = 35,
+	maxh = 65,
 	trees = {{"normal",27},{"grass14",16}},
 	get_block = function(temp, humi, base_, wl, y)
 		local base = base_
@@ -364,10 +363,10 @@ badd({
 })
 badd({
 	name = "Forest",
-	mint = 1.25,
-	maxt = 1.5,
+	mint = 1.2,
+	maxt = 1.4,
 	minh = 0,
-	maxh = 95,
+	maxh = 100,
 	trees = {{"normal",19},{"grass14",60},{"grass35",5},{"papyrus",16},{"flowers",18}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -393,9 +392,9 @@ badd({
 })
 badd({
 	name = "Jungle",
-	mint = 1.25,
-	maxt = 1.5,
-	minh = 95,
+	mint = 1.4,
+	maxt = 1.6,
+	minh = 0,
 	maxh = 100,
 	trees = {{"jungle",16},{"jungle_grass",5},{"papyrus",20},{"flowers",20}},
 	get_block = function(temp, humi, base, wl, y)
@@ -423,8 +422,8 @@ badd({
 -- dry
 badd({
 	name = "Savanna",
-	mint = 1.5,
-	maxt = 1.75,
+	mint = 1.6,
+	maxt = 1.8,
 	trees = {{"savanna",225},{"grass35",4}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -455,7 +454,7 @@ badd({
 -- hot
 badd({
 	name = "Desert",
-	mint = 1.75,
+	mint = 1.8,
 	maxt = 2,
 	trees = {{"cactus",50},{"dry_shrub",50}},
 	get_block = function(temp, humi, base, wl, y)

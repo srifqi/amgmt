@@ -40,17 +40,16 @@ end
 -- noiseparam
 amgmt.np = {
 --	s = seed, o = octaves, p = persistance, c = scale
-	b = {s = 1234, o = 6, p = 0.5, c = 512},
-	m = {s = 4321, o = 6, p = 0.5, c = 256},
-	f = {s = 3456, o = 6, p = 0.5, c = 360},
-	t = {s = 5678, o = 7, p = 0.5, c = 512},
-	h = {s = 8765, o = 7, p = 0.5, c = 512},
-	l = {s = 125, o = 6, p = 0.5, c = 256},
-	c = {s = 1024, o = 7, p = 0.5, c = 512},
-	d = {s = 2048, o = 7, p = 0.5, c = 512},
+	b = {s = 1234, o = 6, p = 0.5, c = 512}, -- base terrain
+	p = {s = 3333, o = 5, p = 0.5, c = 256}, -- plateau (flat at top)
+	t = {s = 5678, o = 3, p = 0.5, c = 512}, -- temperature
+	h = {s = 8765, o = 3, p = 0.5, c = 512}, -- humidity
+	l = {s = 1667, o = 6, p = 0.5, c = 256}, -- lake
+	c = {s = 1024, o = 7, p = 0.5, c = 512}, -- cave
+	d = {s = 2048, o = 7, p = 0.5, c = 512}, -- cave deepness
 }
 
-local np = amgmt.np
+local np = amgmt.np -- copy of noiseparam
 
 --node id?
 local gci = minetest.get_content_id
@@ -66,20 +65,48 @@ local c_sandstone = gci("default:sandstone")
 local c_water = gci("default:water_source")
 local c_lava_source = gci("default:lava_source")
 
-local function get_base(base, temp, humi)
+function get_base(base, temp, humi, plat)
 	if base < wl then return math.ceil(base) end
 	local base_ = base
+	local bwl = base - wl
+	local plat = plat+1
+	local opt = 1/10 -- one per ten LOL
 	
-	if humi <= 55 and humi >= 45 then
+	--river
+	if humi <= 52.5 and humi >= 47.5 then
 		if humi >= 50 then
-			base_ = wl+math.ceil(((1-(55-humi))*(base-wl)/2.5))
+			base_ = wl-(1-(humi-50)/2.5)*(base%3+1)-1
 		elseif humi <= 50 then
-			base_ = wl+math.ceil(((1-(humi-45))*(base-wl)/2.5))
+			base_ = wl-(1-(50-humi)/2.5)*(base%3+1)-1
 		end
-	end
-	
-	if humi < 52.5 and humi > 47.5 then
-		base_ = wl + math.floor((base_-wl)/3) -1
+	--riverbank
+	elseif humi < 55 and humi > 45 then
+		if plat > 0.25 and plat < 0.45 then
+			if humi >= 50 then
+				base_ = wl+((humi-52.5)/2.5)*25
+			elseif humi <= 50 then
+				base_ = wl+((47.5-humi)/2.5)*25
+			end
+
+		else
+			if humi >= 50 then
+				base_ = wl+((humi-52.5)/2.5)*bwl
+			elseif humi <= 50 then
+				base_ = wl+((47.5-humi)/2.5)*bwl
+			end
+		end
+	--plateau
+	elseif plat > 0.25 and plat < 0.45 then
+		base_ = wl+25+(bwl/4%2)
+	--plateau edge
+	elseif plat > 0.25-opt and plat < 0.45+opt then
+		if plat >= 0.35 then
+			base_ = math.max(wl+(1-(plat-0.45)/opt)*25,base)
+		elseif plat <= 0.35 then
+			base_ = math.max(wl+(1-(0.25-plat)/opt)*25,base)
+		end
+	else
+		base_ = base
 	end
 	
 	return math.ceil(base_)
@@ -150,12 +177,14 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local data = vm:get_data()
 	
 	--noise
+	local t2 = os.clock()
 	local base = get_perlin_map(np.b, minp, maxp) -- base height
-	local moun = get_perlin_map(np.m, minp, maxp) -- addition
+	local plat = get_perlin_map(np.p, minp, maxp) -- plateau
 	local temp = get_perlin_map(np.t, minp, maxp) -- temperature (0-2)
 	local humi = get_perlin_map(np.h, minp, maxp) -- humidity (0-100)
 	local lake = get_perlin_map(np.l, minp, maxp) -- lake
 	
+	--
 	local cave = {} -- list of caves
 	local deep = {} -- list of cave deepness
 	for o = 1, 5 do
@@ -166,35 +195,25 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		dnp.s = dnp.s + o
 		deep[o] = get_perlin_map(dnp, minp, maxp)
 	end
+	--]]
 	
 	local sidelen = maxp.x - minp.x +1
-	local fissure = minetest.get_perlin_map({ -- fissure
-			offset=0, scale=1,
-			spread={x=np.f.c, y=np.f.c, z=np.f.c},
-			seed=np.f.s, octaves=np.f.o, persist=np.f.p
-		},
-		{x=sidelen, y=sidelen, z=sidelen}
-	):get3dMap_flat(minp)
-	amgmt.debug("noise calculated")
+	local t3 = math.ceil((os.clock() - t2) * 100000)/100
+	amgmt.debug("noise calculated - "..t3.."ms")
 	
 	--terraforming
+	local t2 = os.clock()
 	local nizx = 0
 	local nizyx = 0
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
 		nizx = nizx + 1
 		nizyx = nizyx + 1
-		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
-		local temp_ = 0
-		local humi_ = 0
-		if base_ > 95 then
-			temp_ = 0.1
-			humi_ = 90
-		else
-			temp_ = math.abs(temp[nizx] * 2)
-			humi_ = math.abs(humi[nizx] * 100)
-		end
-		base_ = get_base(base_, temp_, humi_)
+		local base_ = math.ceil((base[nizx] * 25) + wl)
+		local plat_ = plat[nizx]
+		local temp_ = math.abs(temp[nizx] * 2)
+		local humi_ = math.abs(humi[nizx] * 100)
+		base_ = get_base(base_, temp_, humi_, plat_)
 		--amgmt.debug(x..","..z.." : "..temp_)
 		for y_ = minp.y, maxp.y do
 			nizyx = nizyx + sidelen
@@ -204,11 +223,6 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 				-- air
 			elseif y_ == BEDROCK then
 				data[vi] = c_bedrock
-			--
-			-- fissure
-			elseif math.abs(fissure[nizyx]) < 0.0045 then
-				-- air
-			--]]
 			-- biome
 			else
 				local node = amgmt.biome.get_block_by_temp_humi(temp_, humi_, base_, wl, y_, x, z)
@@ -220,32 +234,32 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		nizyx = nizyx - (sidelen * sidelen)
 	end
 	end
-	amgmt.debug("terrain generated")
+	local t3 = math.ceil((os.clock() - t2) * 100000)/100
+	amgmt.debug("terrain generated - "..t3.."ms")
 	
+	--
 	--ore generation
+	local t2 = os.clock()
 	amgmt.ore.generate(minp, maxp, data, area, seed)
-	amgmt.debug("ore generated")
+	local t3 = math.ceil((os.clock() - t2) * 100000)/100
+	amgmt.debug("ore generated - "..t3.."ms")
+	--]]
 	
+	--
 	--cave forming
+	local t2 = os.clock()
 	local nizx = 0
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
 		nizx = nizx + 1
-		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
+		local base_ = math.ceil((base[nizx] * 25) + wl)
 		
 		for o = 1, 5 do
 			local cave_ = (cave[o][nizx]+1)/2
-			local deep_ = deep[o][nizx]
-			if o < 2 then
-				deep_ = deep_ * 30 + 5
-			elseif o < 4 then
-				deep_ = deep_ * 50 - 25
-			else
-				deep_ = deep_ * 50 - 45
-			end
+			local deep_ = deep[o][nizx] * 45 - 25
 			
-			if cave_ < 0.001 or cave_ > 1-0.001 then
-				local y = math.floor(wl + deep_ + 0.5)
+			if cave_ > 1-0.001 then
+				local y = math.floor(wl + deep_)
 				local shape = (base_%3) + 1
 				build_cave_segment(x, y, z, data, area, shape, 1, c_stone)
 				build_cave_segment(x, y, z, data, area, shape, 1, c_dirt)
@@ -259,9 +273,13 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		end
 	end
 	end
-	amgmt.debug("cave generated")
+	local t3 = math.ceil((os.clock() - t2) * 100000)/100
+	amgmt.debug("cave generated - "..t3.."ms")
+	--]]
 	
 	--forming lake
+	--
+	local t2 = os.clock()
 	local chulen = (maxp.x - minp.x + 1) / 16
 	local nizx = 0
 	for cz = 0, chulen-1 do
@@ -273,17 +291,11 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	for x = minp.x + cx*16 +3, minp.x + (cx+1)*16 -3 do -- +-3 for lake borders
 		if found_lake == true then break end
 		nizx = nizx + 1
-		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
-		local temp_ = 0
-		local humi_ = 0
-		if base_ > 95 then
-			temp_ = 0.1
-			humi_ = 90
-		else
-			temp_ = math.abs(temp[nizx] * 2)
-			humi_ = math.abs(humi[nizx] * 100)
-		end
-		base_ = get_base(base_, temp_, humi_)
+		local base_ = math.ceil((base[nizx] * 25) + wl)
+		local plat_ = plat[nizx]
+		local temp_ = math.abs(temp[nizx] * 2)
+		local humi_ = math.abs(humi[nizx] * 100)
+		base_ = get_base(base_, temp_, humi_, plat_)
 		local lake_ = math.abs(lake[nizx])
 		if lake_ < 0.0005 then
 			--amgmt.debug("lake found! "..x..","..base_..","..z.." ("..lake_..")")
@@ -293,7 +305,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 				local vi = area:index(x+u,base_-2,z+i)
 				if pr:next(1,3) >= 2 then
 					data[vi] = c_sandstone
-				elseif data[vi] ~= c_air then
+				else
 					data[vi] = c_stone
 				end
 			for o = -1, 0 do
@@ -303,6 +315,10 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 				else
 					data[vi] = c_sand
 				end
+			end
+			for o = 1, 2 do
+				local vi = area:index(x+u,base_+o,z+i)
+				data[vi] = c_air
 			end
 			end
 			end
@@ -319,25 +335,22 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	end
 	end
 	end
-	amgmt.debug("lake formed")
+	local t3 = math.ceil((os.clock() - t2) * 100000)/100
+	amgmt.debug("lake formed - "..t3.."ms")
+	--]]
 	
-	--
 	--tree planting
+	--
+	local t2 = os.clock()
 	local nizx = 0
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
 		nizx = nizx + 1
-		local base_ = math.ceil((base[nizx] * -50) + wl + 16.67 + (moun[nizx] * 15))
-		local temp_ = 0
-		local humi_ = 0
-		if base_ > 95 then
-			temp_ = 0.1
-			humi_ = 90
-		else
-			temp_ = math.abs(temp[nizx] * 2)
-			humi_ = math.abs(humi[nizx] * 100)
-		end
-		base_ = get_base(base_, temp_, humi_)
+		local base_ = math.ceil((base[nizx] * 25) + wl)
+		local plat_ = plat[nizx]
+		local temp_ = math.abs(temp[nizx] * 2)
+		local humi_ = math.abs(humi[nizx] * 100)
+		base_ = get_base(base_, temp_, humi_, plat_)
 		local biome__ = amgmt.biome.list[ amgmt.biome.get_by_temp_humi(temp_,humi_)[1] ]
 		local tr = biome__.trees
 		local filled = false
@@ -363,7 +376,8 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		end
 	end
 	end
-	amgmt.debug("tree planted")
+	local t3 = math.ceil((os.clock() - t2) * 100000)/100
+	amgmt.debug("tree planted - "..t3.."ms")
 	--]]
 	
 	amgmt.debug("applying map data")

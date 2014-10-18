@@ -48,6 +48,7 @@ minetest.register_ore({
     height_max     = 64,
 })
 --]]
+--[[
 function minetest.register_ore(def)
 	amgmt.debug(def.ore.." added")
 	if def.ore_type == "scatter" then
@@ -62,6 +63,7 @@ function minetest.register_ore(def)
 		amgmt.ore.register_ore(def)
 	end
 end
+--]]
 
 local function get_nearest_cube(n)
 	for i=1, 16 do if i*i*i>=n then return i end end
@@ -89,27 +91,28 @@ function amgmt.ore.generate(minp, maxp, data, area, seed)
 		-- generate ore
 		for ii = 1, #ore do
 			local oi = ore[ii]
-			local pr = PseudoRandom(seed + oi.seeddiff)
-			-- make it more random first
-			for rr = 0, math.abs(xx/16 + yy/16 + zz/16) do local rrr = pr:next(0,1) end
-			for oo = 1, oi.clust_num do
-				local xx_ = xx + pr:next(0,16)
-				local yy_ = yy + pr:next(0,16)
-				local zz_ = zz + pr:next(0,16)
-				local cubelen = get_nearest_cube(oi.ore_per_clust)
-				local cubemin = math.ceil(cubelen/2) * -1
-				local cubemax = math.floor(cubelen/2)
-				for uu = 1, oi.ore_per_clust do
-					local xxx = xx_ + pr:next(cubemin,cubemax)
-					local yyy = yy_ + pr:next(cubemin,cubemax)
-					local zzz = zz_ + pr:next(cubemin,cubemax)
-					local vi = area:index(xxx,yyy,zzz)
-					if
-						yyy >= oi.minh and yyy <= oi.maxh and
-						data[vi] == gci(oi.wherein)
-					then
-						--amgmt.debug(oi.ore.." generated at:"..xxx..","..yyy..","..zzz)
-						data[vi] = gci(oi.ore)
+			if maxp.y >= oi.minh and minp.y <= oi.maxh then
+				local pr = PseudoRandom(seed + oi.seeddiff)
+				-- make it more random first
+				for rr = 0, math.abs(xx/16 + yy/16 + zz/16) do local rrr = pr:next(0,1) end
+				for oo = 1, oi.clust_num do
+					local xx_ = xx + pr:next(0,16)
+					local yy_ = yy + pr:next(0,16)
+					local zz_ = zz + pr:next(0,16)
+					local cubelen = get_nearest_cube(oi.ore_per_clust)
+					local cubemin = math.ceil(cubelen/2) * -1
+					local cubemax = math.floor(cubelen/2)
+					for uu = 1, oi.ore_per_clust do
+						local yyy = yy_ + pr:next(cubemin,cubemax)
+						if yyy >= oi.minh and yyy <= oi.maxh then
+							local xxx = xx_ + pr:next(cubemin,cubemax)
+							local zzz = zz_ + pr:next(cubemin,cubemax)
+							local vi = area:index(xxx,yyy,zzz)
+							if data[vi] == gci(oi.wherein) then
+								--amgmt.debug(oi.ore.." generated at:"..xxx..","..yyy..","..zzz)
+								data[vi] = gci(oi.ore)
+							end
+						end
 					end
 				end
 			end

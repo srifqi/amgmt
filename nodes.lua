@@ -56,6 +56,7 @@ for i=1, #tree_add do
 	
 	minetest.register_node("amgmt:"..tree_add[i][1].."_leaves", {
 		description = tree_add[i][2].." Leaves",
+		trunk = "amgmt:"..tree_add[i][1].."_tree",
 		drawtype = "allfaces_optional",
 		waving = 1,
 		visual_scale = 1.3,

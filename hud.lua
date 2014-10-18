@@ -4,23 +4,13 @@ amgmt.hud = {}
 local np = amgmt.np
 
 minetest.register_globalstep(function(dtime)
-	if dtime < 0.1 then return end
+	--if dtime < 0.1 then return end
 	for _,player in ipairs(minetest.get_connected_players()) do
 		local pos = player:getpos()
 		local name = player:get_player_name()
 		
-		local base = minetest.get_perlin(np.b.s, np.b.o, np.b.p, np.b.c):get2d({x=pos.x,y=pos.z})
-		local moun = minetest.get_perlin(np.m.s, np.m.o, np.m.p, np.m.c):get2d({x=pos.x,y=pos.z})
-		local base = math.ceil((base * -30) + wl + 10 + (moun * 15))
-		local temp = 0
-		local humi = 0
-		if base > 95 then
-			temp = 0.1
-			humi = 90
-		else
-			temp = minetest.get_perlin(np.t.s, np.t.o, np.t.p, np.t.c):get2d({x=pos.x,y=pos.z})
-			humi = minetest.get_perlin(np.h.s, np.h.o, np.h.p, np.h.c):get2d({x=pos.x,y=pos.z})
-		end
+		local temp = minetest.get_perlin(np.t.s, np.t.o, np.t.p, np.t.c):get2d({x=pos.x,y=pos.z})
+		local humi = minetest.get_perlin(np.h.s, np.h.o, np.h.p, np.h.c):get2d({x=pos.x,y=pos.z})
 		
 		local biometext = amgmt.biome.get_by_temp_humi(math.abs(temp*2),math.abs(humi*100))[2]
 		
