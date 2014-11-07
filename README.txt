@@ -15,8 +15,9 @@ CC0 1.0 Universal
 - 16 biome
 - Biomes, Trees, Nodes, Ores, etc. are modifyable
 - Experimental water lakes!
-- 'Moreores' mod support
+- Experimental mineshaft!
 - New caving system!
+- 'Moreores' mod support
 - Using 15 2D perlin noise
 
 #Noise usage

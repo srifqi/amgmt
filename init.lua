@@ -6,7 +6,7 @@ amgmt = {}
 print("[amgmt] (Another Map Generator for Minetest)")
 
 --param?
-DEBUG = true -- turn this off if your debug.txt is too full
+DEBUG = false -- turn this off if your debug.txt is too full
 wl = 0 -- water level
 HMAX = 500
 HMIN = -30000
@@ -22,6 +22,7 @@ dofile(minetest.get_modpath(minetest.get_current_modname()).."/nodes.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/trees.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/biomemgr.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/oremgr.lua")
+dofile(minetest.get_modpath(minetest.get_current_modname()).."/mineshaft.lua")
 
 minetest.register_on_mapgen_init(function(mgparams)
 	amgmt.seed = mgparams.seed
@@ -243,6 +244,14 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	amgmt.ore.generate(minp, maxp, data, area, seed)
 	local t3 = math.ceil((os.clock() - t2) * 100000)/100
 	amgmt.debug("ore generated - "..t3.."ms")
+	--]]
+	
+	--
+	--mineshaft construction
+	local t2 = os.clock()
+	amgmt.mineshaft.generate(minp, maxp, data, area, seed, pr, plat)
+	local t3 = math.ceil((os.clock() - t2) * 100000)/100
+	amgmt.debug("mineshaft constructed - "..t3.."ms")
 	--]]
 	
 	--
