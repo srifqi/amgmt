@@ -12,10 +12,22 @@ local c_gravel = gci("default:gravel")
 local c_dirt = gci("default:dirt")
 local c_dirt_grass = gci("default:dirt_with_grass")
 local c_dirt_snow = gci("default:dirt_with_snow")
+local c_dirt_savanna = gci("amgmt:dirt_at_savanna")
 local c_sand = gci("default:sand")
 local c_sandstone = gci("default:sandstone")
+local c_clay = gci("default:clay")
 
-local c_dirt_savanna = gci("amgmt:dirt_at_savanna")
+local c_bakedclayred = gci("amgmt:bakedclay_red")
+local c_bakedclayorange = gci("amgmt:bakedclay_orange")
+local c_bakedclayblue = gci("amgmt:bakedclay_blue")
+local c_bakedclaycyan = gci("amgmt:bakedclay_cyan")
+-- bakedclay mod by TenPlus1 WTFPL
+if minetest.get_modpath("bakedclay") then
+	local c_bakedclayred = gci("bakedclay:red")
+	local c_bakedclayorange = gci("bakedclay:orange")
+	local c_bakedclayblue = gci("bakedclay:blue")
+	local c_bakedclaycyan = gci("bakedclay:cyan")
+end
 
 --generated structures
 badd({
@@ -98,6 +110,33 @@ badd({
 	end
 })
 badd({
+	name = "Cold Mesa",
+	mint = 0,
+	maxt = 0.2,
+	minh = 0,
+	maxh = 30,
+	trees = {},
+	get_block = function(temp, humi, base, wl, y)
+		if y > base and y > wl then
+			return c_air
+		elseif y > base and y <= wl then
+			if base < wl then
+				return c_water
+			elseif base >= wl then
+				return c_air
+			end
+		elseif y <= base then
+			if math.floor(y / 4) * 4 == y then
+				return c_bakedclaycyan
+			else
+				return c_bakedclayblue
+			end
+		else
+			return c_stone
+		end
+	end
+})
+badd({
 	name = "Ice Plains Spikes",
 	mint = 0,
 	maxt = 0.2,
@@ -132,6 +171,8 @@ badd({
 	name = "Cold Taiga",
 	mint = 0,
 	maxt = 0.2,
+	minh = 70,
+	maxh = 100,
 	trees = {{"pine_cold",25}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -452,6 +493,41 @@ badd({
 	end
 })
 -- hot
+badd({
+	name = "Mesa",
+	mint = 1.8,
+	maxt = 2,
+	minh = 10,
+	maxh = 50,
+	trees = nil,
+	get_block = function(temp, humi, base, wl, y)
+		if y > base and y > wl then
+			return c_air
+		elseif y > base and y <= wl then
+			if base < wl then
+				return c_water
+			elseif base >= wl then
+				return c_air
+			end
+		elseif y < base then
+			if math.floor(y / 4) * 4 == y then
+				return c_bakedclayorange
+			else
+				return c_bakedclayred
+			end
+		elseif y == base then
+			if math.floor((y + 2) / 4) * 4 == (y + 2) then
+				return c_clay
+			elseif math.floor(y / 4) * 4 == y then
+				return c_bakedclayorange
+			else
+				return c_bakedclayred
+			end
+		else
+			return c_stone
+		end
+	end
+})
 badd({
 	name = "Desert",
 	mint = 1.8,

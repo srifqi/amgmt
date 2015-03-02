@@ -14,6 +14,11 @@ function amgmt.biome.add(p)
 	}
 end
 
+function amgmt.biome.clear()
+	-- reset
+	amgmt.biome.list = {}
+end
+
 -- testing purpose only!
 amgmt.biome.add({
 	name = "NIL (Biome?)",

@@ -17,8 +17,8 @@ CC0 1.0 Universal
 - Biomes, Trees, Nodes, Ores, etc. are modifyable
 - Experimental water lakes!
 - Experimental mineshaft!
-- New caving system!
 - 'Moreores' mod support
+- New caving system!
 - Using 15 2D perlin noise
 
 ##Noise usage
@@ -32,6 +32,7 @@ CC0 1.0 Universal
 - Frozen River
 - Ice Plains
 - Ice Plains Spikes
+- Cold Mesa
 - Cold Taiga
 - Gravel Plain
 - Stone Plain
@@ -44,4 +45,5 @@ CC0 1.0 Universal
 - Forest
 - Jungle
 - Savanna
+- Mesa
 - Desert

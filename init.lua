@@ -6,7 +6,7 @@ amgmt = {}
 print("[amgmt] (Another Map Generator for Minetest)")
 
 --param?
-DEBUG = false -- turn this off if your debug.txt is too full
+DEBUG = false -- set to false if your debug.txt is too full
 wl = 0 -- water level
 HMAX = 500
 HMIN = -30000
@@ -215,7 +215,6 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		local temp_ = math.abs(temp[nizx] * 2)
 		local humi_ = math.abs(humi[nizx] * 100)
 		base_ = get_base(base_, temp_, humi_, plat_)
-		--amgmt.debug(x..","..z.." : "..temp_)
 		for y_ = minp.y, maxp.y do
 			nizyx = nizyx + sidelen
 			local vi = area:index(x,y_,z)
@@ -286,13 +285,14 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	amgmt.debug("cave generated - "..t3.."ms")
 	--]]
 	
-	--forming lake
 	--
+	--forming lake
 	local t2 = os.clock()
 	local chulen = (maxp.x - minp.x + 1) / 16
 	local nizx = 0
 	for cz = 0, chulen-1 do
 	for cx = 0, chulen-1 do
+	-- for every chunk do
 	nizx = (cz*chulen + cx) * 16
 	local found_lake = false
 	for z = minp.z + cz*16 +3, minp.z + (cz+1)*16 -3 do -- +-3 for lake borders
@@ -306,7 +306,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		local humi_ = math.abs(humi[nizx] * 100)
 		base_ = get_base(base_, temp_, humi_, plat_)
 		local lake_ = math.abs(lake[nizx])
-		if lake_ < 0.0005 then
+		if lake_ < 0.0005 and base_ > 5 then
 			--amgmt.debug("lake found! "..x..","..base_..","..z.." ("..lake_..")")
 			found_lake = true
 			for u = -2, 2 do
@@ -348,8 +348,8 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	amgmt.debug("lake formed - "..t3.."ms")
 	--]]
 	
-	--tree planting
 	--
+	--tree planting
 	local t2 = os.clock()
 	local nizx = 0
 	for z = minp.z, maxp.z do
@@ -374,13 +374,6 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 			then
 				amgmt.tree.spawn({x=x,y=base_+1,z=z},tr[i][1],data,area,seed,minp,maxp,pr)
 				filled = true
-				--[[
-				amgmt.debug(
-					"spawned "..tr[i][1]..
-					" at "..x..","..(base_+1)..","..z..
-					" in "..biome__.name.." biome"
-				)
-				--]]
 			end
 		end
 	end

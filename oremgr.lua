@@ -6,6 +6,12 @@ amgmt.ore.registered_sheet = {}
 
 local seeddiff_count = 1024
 
+function amgmt.ore.clear()
+	amgmt.ore.registered = {}
+	amgmt.ore.registered_sheet = {}
+	seeddiff_count = 1024
+end
+
 function amgmt.ore.register(def)
 	-- registering ore per 16x16x16 block size
 	amgmt.ore.registered[#amgmt.ore.registered+1] = {

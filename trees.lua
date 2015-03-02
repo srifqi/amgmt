@@ -18,6 +18,16 @@ function amgmt.tree.register(def)
 	amgmt.tree.count = amgmt.tree.count + 1
 end
 
+function amgmt.tree.clear()
+	amgmt.tree.registered = {}
+	amgmt.tree.count = 0
+	
+	amgmt.tree.register({
+		name = "nil",
+		grow = function() end
+	})
+end
+
 amgmt.tree.register({
 	name = "nil",
 	grow = function() end
@@ -495,7 +505,7 @@ regtr({
 			end
 			end
 			end
-			j = h + pr:next(2,3)
+			local j = h + pr:next(2,3)
 			for u = 0, 1 do
 			for i = -1, 0 do
 			local vi = area:index(x+u, y-1, z+i)

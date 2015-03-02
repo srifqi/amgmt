@@ -1,9 +1,48 @@
 minetest.register_node("amgmt:bedrock", {
-	description = "amgmt's BEDROCK (How you get this?)",
+	description = "amgmt's BEDROCK (How do you get this?)",
 	tiles ={"default_cobble.png"},
 	groups = {unbreakable = 1, not_in_creative_inventory = 1},
 	sounds = default.node_sound_stone_defaults()
 })
+
+-- from TenPlus1's bakedclay (0.3) WTFPL
+local color = {
+	{"orange","Orange"},
+	{"red","Red"},
+	{"blue","Blue"},
+	{"cyan","Cyan"},
+}
+for i=1, #color do
+	local param = {
+		description = color[i][2] .. " Baked Clay",
+		tiles = {"amgmt_bakedclay_" .. color[i][1] .. ".png"},
+		groups = {cracky=3,bakedclay=1},
+		sounds = default.node_sound_stone_defaults()
+	}
+	if minetest.get_modpath("bakedclay") then
+		param.drop = "bakedclay:" .. color[i][1]
+		param.groups.not_in_creative_inventory = 1
+	end
+	minetest.register_node("amgmt:bakedclay_" .. color[i][1], param)
+end
+
+if minetest.get_modpath("bakedclay") then
+	minetest.register_alias("amgmt:bakedclay_orange","bakedclay:orange")
+	minetest.register_alias("amgmt:bakedclay_red","bakedclay:red")
+	minetest.register_alias("amgmt:bakedclay_blue","bakedclay:blue")
+	minetest.register_alias("amgmt:bakedclay_cyan","bakedclay:cyan")
+else
+	minetest.register_craft({
+		type = "cooking",
+		output = "amgmt:hardened_clay",
+		recipe = "default:clay",
+	})
+	
+	minetest.register_alias("bakedclay:orange","amgmt:bakedclay_orange")
+	minetest.register_alias("bakedclay:red","amgmt:bakedclay_red")
+	minetest.register_alias("bakedclay:blue","amgmt:bakedclay_blue")
+	minetest.register_alias("bakedclay:cyan","amgmt:bakedclay_cyan")
+end
 
 minetest.register_node("amgmt:dirt_at_savanna", {
 	description = "Dirt with Grass at Savanna",
