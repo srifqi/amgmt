@@ -13,11 +13,12 @@ CC0 1.0 Universal
 - flowers
 
 ##Feature
-- 16 biome
+- 18 biome
 - Biomes, Trees, Nodes, Ores, etc. are modifyable
 - Experimental water lakes!
 - Experimental mineshaft!
-- 'Moreores' mod support
+- 'moreores' mod support
+- 'bakedclay' mod support
 - New caving system!
 - Using 15 2D perlin noise
 
