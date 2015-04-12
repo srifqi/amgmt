@@ -7,7 +7,7 @@ amgmt = {}
 print("[amgmt] (Another Map Generator for Minetest)")
 
 --param?
-amgmt.DEBUG = true		-- set to true if your want to check performance (see debug.txt)
+amgmt.DEBUG = false		-- set to true if your want to check performance (see debug.txt)
 amgmt.wl = 0			-- water level
 amgmt.HMAX = 500		-- maximum height for the mapgen to generate
 amgmt.HMIN = -30000		-- minimum height for the mapgen to generate
@@ -20,6 +20,7 @@ end
 amgmt.biome = {}
 amgmt.tree = {}
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/nodes.lua")
+dofile(minetest.get_modpath(minetest.get_current_modname()).."/abm.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/trees.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/biomemgr.lua")
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/oremgr.lua")
