@@ -5,10 +5,10 @@ amgmt.biome.list = {}
 function amgmt.biome.add(p)
 	amgmt.biome.list[#amgmt.biome.list+1] = {
 		name = p.name,
-		mint = p.mint, -- min temperature
-		maxt = p.maxt, -- max
-		minh = p.minh or 0, -- min humidity
-		maxh = p.maxh or 100, -- max
+		mint = p.mint,			-- min temperature
+		maxt = p.maxt,			-- max temperature
+		minh = p.minh or 0,		-- min humidity
+		maxh = p.maxh or 100,	-- max humidity
 		trees = p.trees or {{"nil",1024}},
 		get_block = p.get_block
 	}
@@ -18,15 +18,6 @@ function amgmt.biome.clear()
 	-- reset
 	amgmt.biome.list = {}
 end
-
--- testing purpose only!
-amgmt.biome.add({
-	name = "NIL (Biome?)",
-	mint = -5,
-	maxt = -3,
-	get_block = function() return minetest.get_content_id("air") end
-})
---]]
 
 function amgmt.biome.get_by_temp_humi(t,h)
 	t = math.min(t, 2)

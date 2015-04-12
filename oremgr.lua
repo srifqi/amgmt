@@ -20,8 +20,8 @@ function amgmt.ore.register(def)
 		seeddiff = def.seeddiff or seeddiff_count,
 		clust_num = def.clust_num or 1,
 		ore_per_clust = def.ore_per_clust or 5,
-		minh = def.minh or HMIN,
-		maxh = def.maxh or MAXH
+		minh = def.minh or amgmt.HMIN,
+		maxh = def.maxh or amgmt.MAXH
 	}
 	seeddiff_count = seeddiff_count +1
 end

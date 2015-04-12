@@ -1,7 +1,7 @@
 minetest.register_node("amgmt:bedrock", {
 	description = "amgmt's BEDROCK (How do you get this?)",
-	tiles ={"default_cobble.png"},
-	groups = {unbreakable = 1, not_in_creative_inventory = 1},
+	tiles ={"amgmt_bedrock.png"},
+	groups = {unbreakable = 1, not_in_creative_inventory = 1, immortal = 1},
 	sounds = default.node_sound_stone_defaults()
 })
 
@@ -55,6 +55,28 @@ minetest.register_node("amgmt:dirt_at_savanna", {
 	}),
 })
 
+minetest.register_node("amgmt:seaweed", {
+	description = "Seaweed",
+	drawtype = "plantlike",
+	tiles = {"amgmt_seaweed.png"},
+	inventory_image = "amgmt_seaweed.png",
+	wield_image = "amgmt_seaweed.png",
+	paramtype = "light",
+	walkable = false,
+	is_ground_content = false,
+	light_source = 3,
+	selection_box = {
+		type = "fixed",
+		fixed = {-0.3, -0.5, -0.3, 0.3, 0.5, 0.3}
+	},
+	groups = {snappy=3,flammable=2},
+	sounds = default.node_sound_leaves_defaults(),
+	after_dig_node = function(pos, node, metadata, digger)
+		default.dig_up(pos, node, digger)
+	end,
+	on_use = minetest.item_eat(2)
+})
+
 local tree_add = {
 	{"savanna","Savanna"},
 	{"pine","Pine"},
@@ -73,6 +95,24 @@ for i=1, #tree_add do
 		groups = {tree=1,choppy=2,oddly_breakable_by_hand=1,flammable=2},
 		sounds = default.node_sound_wood_defaults(),
 		on_place = minetest.rotate_node
+	})
+	
+	minetest.register_node("amgmt:"..tree_add[i][1].."_wood", {
+		description = tree_add[i][2].." Wood",
+		tiles = {"amgmt_"..tree_add[i][1].."_wood.png"},
+		is_ground_content = false,
+		groups = {choppy=2,oddly_breakable_by_hand=2,flammable=3,wood=1},
+		sounds = default.node_sound_wood_defaults(),
+	})
+	
+	minetest.register_craft({
+		output = "amgmt:"..tree_add[i][1].."_wood 4",
+		recipe = {{"amgmt:"..tree_add[i][1].."_tree"}}
+	})
+	
+	minetest.register_craft({
+		output = "default:stick 4",
+		recipe = {{"amgmt:"..tree_add[i][1].."_wood"}}
 	})
 	
 	minetest.register_node("amgmt:"..tree_add[i][1].."_sapling", {

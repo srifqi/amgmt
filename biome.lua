@@ -2,6 +2,7 @@ amgmt = amgmt or {}
 amgmt.biome = amgmt.biome or {}
 local gci = minetest.get_content_id
 local badd = amgmt.biome.add
+local wl = amgmt.wl
 
 -- node id?
 local c_air = gci("air")
@@ -373,7 +374,7 @@ badd({
 	maxt = 1.4,
 	minh = 35,
 	maxh = 65,
-	trees = {{"normal",27},{"grass14",16}},
+	trees = {{"normal",27},{"grass14",16},{"seaweed",256}},
 	get_block = function(temp, humi, base_, wl, y)
 		local base = base_
 		if base_ < 5 and base_ > -1 then base = base % 2 - 1 end
@@ -393,7 +394,7 @@ badd({
 			if y < wl then
 				return c_dirt
 			else
-				if temp > 1.6 and base == wl then
+				if (temp > 1.6 and base == wl) or (base < wl-15) then
 					return c_sand
 				else
 					return c_dirt_grass
@@ -408,7 +409,7 @@ badd({
 	maxt = 1.4,
 	minh = 0,
 	maxh = 100,
-	trees = {{"normal",19},{"grass14",60},{"grass35",5},{"papyrus",16},{"flowers",18}},
+	trees = {{"normal",19},{"grass14",60},{"grass35",5},{"papyrus",16},{"flowers",18},{"seaweed",128}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
 			return c_air
@@ -424,7 +425,11 @@ badd({
 			return c_dirt
 		else
 			if y < wl then
-				return c_dirt
+				if base < wl-15 then
+					return c_sand
+				else
+					return c_dirt
+				end
 			else
 				return c_dirt_grass
 			end
@@ -437,7 +442,7 @@ badd({
 	maxt = 1.6,
 	minh = 0,
 	maxh = 100,
-	trees = {{"jungle",16},{"jungle_grass",5},{"papyrus",20},{"flowers",20}},
+	trees = {{"jungle",16},{"jungle_grass",5},{"papyrus",20},{"flowers",20},{"seaweed",256}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
 			return c_air
@@ -453,7 +458,11 @@ badd({
 			return c_dirt
 		else
 			if y < wl then
-				return c_dirt
+				if base < wl-15 then
+					return c_sand
+				else
+					return c_dirt
+				end
 			else
 				return c_dirt_grass
 			end
@@ -532,7 +541,7 @@ badd({
 	name = "Desert",
 	mint = 1.8,
 	maxt = 2,
-	trees = {{"cactus",50},{"dry_shrub",50}},
+	trees = {{"cactus",50},{"dry_shrub",50},{"seaweed",256}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
 			return c_air

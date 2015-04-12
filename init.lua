@@ -1,19 +1,20 @@
--- Another Map Generator for Minetest [amgmt] by srifqi
+-- Another Map Generator for Minetest [amgmt]
+-- by Muhammad Rifqi Priyo Susanto (srifqi)
 -- License: CC0 1.0 Universal
--- Dependencies: default, flowers
+-- Dependencies: default, flowers, bakedclay?
 
 amgmt = {}
 print("[amgmt] (Another Map Generator for Minetest)")
 
 --param?
-DEBUG = false -- set to false if your debug.txt is too full
-wl = 0 -- water level
-HMAX = 500
-HMIN = -30000
-BEDROCK = -29999 -- bedrock level
+amgmt.DEBUG = true		-- set to true if your want to check performance (see debug.txt)
+amgmt.wl = 0			-- water level
+amgmt.HMAX = 500		-- maximum height for the mapgen to generate
+amgmt.HMIN = -30000		-- minimum height for the mapgen to generate
+amgmt.BEDROCK = -30000	-- bedrock level
 
 function amgmt.debug(text)
-	if DEBUG == true then print("[amgmt]:"..(text or "")) end
+	if amgmt.DEBUG == true then print("[amgmt]:"..(text or "")) end
 end
 
 amgmt.biome = {}
@@ -67,44 +68,44 @@ local c_water = gci("default:water_source")
 local c_lava_source = gci("default:lava_source")
 
 function get_base(base, temp, humi, plat)
-	if base < wl then return math.ceil(base) end
+	if base < amgmt.wl then return math.ceil(base) end
 	local base_ = base
-	local bwl = base - wl
+	local bwl = base - amgmt.wl
 	local plat = plat+1
 	local opt = 1/10 -- one per ten LOL
 	
 	--river
 	if humi <= 52.5 and humi >= 47.5 then
 		if humi >= 50 then
-			base_ = wl-(1-(humi-50)/2.5)*(base%3+1)-1
+			base_ = amgmt.wl-(1-(humi-50)/2.5)*(base%3+1)-1
 		elseif humi <= 50 then
-			base_ = wl-(1-(50-humi)/2.5)*(base%3+1)-1
+			base_ = amgmt.wl-(1-(50-humi)/2.5)*(base%3+1)-1
 		end
 	--riverbank
 	elseif humi < 55 and humi > 45 then
 		if plat > 0.25 and plat < 0.45 then
 			if humi >= 50 then
-				base_ = wl+((humi-52.5)/2.5)*25
+				base_ = amgmt.wl+((humi-52.5)/2.5)*25
 			elseif humi <= 50 then
-				base_ = wl+((47.5-humi)/2.5)*25
+				base_ = amgmt.wl+((47.5-humi)/2.5)*25
 			end
 
 		else
 			if humi >= 50 then
-				base_ = wl+((humi-52.5)/2.5)*bwl
+				base_ = amgmt.wl+((humi-52.5)/2.5)*bwl
 			elseif humi <= 50 then
-				base_ = wl+((47.5-humi)/2.5)*bwl
+				base_ = amgmt.wl+((47.5-humi)/2.5)*bwl
 			end
 		end
 	--plateau
 	elseif plat > 0.25 and plat < 0.45 then
-		base_ = wl+25+(bwl/4%2)
+		base_ = amgmt.wl+25+(bwl/4%2)
 	--plateau edge
 	elseif plat > 0.25-opt and plat < 0.45+opt then
 		if plat >= 0.35 then
-			base_ = math.max(wl+(1-(plat-0.45)/opt)*25,base)
+			base_ = math.max(amgmt.wl+(1-(plat-0.45)/opt)*25,base)
 		elseif plat <= 0.35 then
-			base_ = math.max(wl+(1-(0.25-plat)/opt)*25,base)
+			base_ = math.max(amgmt.wl+(1-(0.25-plat)/opt)*25,base)
 		end
 	else
 		base_ = base
@@ -185,7 +186,6 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local humi = get_perlin_map(np.h, minp, maxp) -- humidity (0-100)
 	local lake = get_perlin_map(np.l, minp, maxp) -- lake
 	
-	--
 	local cave = {} -- list of caves
 	local deep = {} -- list of cave deepness
 	for o = 1, 5 do
@@ -196,7 +196,6 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		dnp.s = dnp.s + o
 		deep[o] = get_perlin_map(dnp, minp, maxp)
 	end
-	--]]
 	
 	local sidelen = maxp.x - minp.x +1
 	local t3 = math.ceil((os.clock() - t2) * 100000)/100
@@ -210,7 +209,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	for x = minp.x, maxp.x do
 		nizx = nizx + 1
 		nizyx = nizyx + 1
-		local base_ = math.ceil((base[nizx] * 25) + wl)
+		local base_ = math.ceil((base[nizx] * 25) + amgmt.wl)
 		local plat_ = plat[nizx]
 		local temp_ = math.abs(temp[nizx] * 2)
 		local humi_ = math.abs(humi[nizx] * 100)
@@ -219,13 +218,13 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 			nizyx = nizyx + sidelen
 			local vi = area:index(x,y_,z)
 			-- world height limit :(
-			if y_ < HMIN or y_ > HMAX then
+			if y_ <= amgmt.HMIN or y_ >= amgmt.HMAX then
 				-- air
-			elseif y_ == BEDROCK then
+			elseif y_ == amgmt.BEDROCK then
 				data[vi] = c_bedrock
 			-- biome
 			else
-				local node = amgmt.biome.get_block_by_temp_humi(temp_, humi_, base_, wl, y_, x, z)
+				local node = amgmt.biome.get_block_by_temp_humi(temp_, humi_, base_, amgmt.wl, y_, x, z)
 				if node ~= c_air then
 					data[vi] = node
 				end
@@ -237,37 +236,32 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local t3 = math.ceil((os.clock() - t2) * 100000)/100
 	amgmt.debug("terrain generated - "..t3.."ms")
 	
-	--
 	--ore generation
 	local t2 = os.clock()
 	amgmt.ore.generate(minp, maxp, data, area, seed)
 	local t3 = math.ceil((os.clock() - t2) * 100000)/100
 	amgmt.debug("ore generated - "..t3.."ms")
-	--]]
 	
-	--
 	--mineshaft construction
 	local t2 = os.clock()
 	amgmt.mineshaft.generate(minp, maxp, data, area, seed, pr, plat)
 	local t3 = math.ceil((os.clock() - t2) * 100000)/100
 	amgmt.debug("mineshaft constructed - "..t3.."ms")
-	--]]
 	
-	--
 	--cave forming
 	local t2 = os.clock()
 	local nizx = 0
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
 		nizx = nizx + 1
-		local base_ = math.ceil((base[nizx] * 25) + wl)
+		local base_ = math.ceil((base[nizx] * 25) + amgmt.wl)
 		
 		for o = 1, 5 do
 			local cave_ = (cave[o][nizx]+1)/2
 			local deep_ = deep[o][nizx] * 45 - 25
 			
 			if cave_ > 1-0.001 then
-				local y = math.floor(wl + deep_)
+				local y = math.floor(amgmt.wl + deep_)
 				local shape = (base_%3) + 1
 				build_cave_segment(x, y, z, data, area, shape, 1, c_stone)
 				build_cave_segment(x, y, z, data, area, shape, 1, c_dirt)
@@ -283,9 +277,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	end
 	local t3 = math.ceil((os.clock() - t2) * 100000)/100
 	amgmt.debug("cave generated - "..t3.."ms")
-	--]]
 	
-	--
 	--forming lake
 	local t2 = os.clock()
 	local chulen = (maxp.x - minp.x + 1) / 16
@@ -300,7 +292,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	for x = minp.x + cx*16 +3, minp.x + (cx+1)*16 -3 do -- +-3 for lake borders
 		if found_lake == true then break end
 		nizx = nizx + 1
-		local base_ = math.ceil((base[nizx] * 25) + wl)
+		local base_ = math.ceil((base[nizx] * 25) + amgmt.wl)
 		local plat_ = plat[nizx]
 		local temp_ = math.abs(temp[nizx] * 2)
 		local humi_ = math.abs(humi[nizx] * 100)
@@ -346,16 +338,14 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	end
 	local t3 = math.ceil((os.clock() - t2) * 100000)/100
 	amgmt.debug("lake formed - "..t3.."ms")
-	--]]
 	
-	--
 	--tree planting
 	local t2 = os.clock()
 	local nizx = 0
 	for z = minp.z, maxp.z do
 	for x = minp.x, maxp.x do
 		nizx = nizx + 1
-		local base_ = math.ceil((base[nizx] * 25) + wl)
+		local base_ = math.ceil((base[nizx] * 25) + amgmt.wl)
 		local plat_ = plat[nizx]
 		local temp_ = math.abs(temp[nizx] * 2)
 		local humi_ = math.abs(humi[nizx] * 100)
@@ -380,7 +370,6 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	end
 	local t3 = math.ceil((os.clock() - t2) * 100000)/100
 	amgmt.debug("tree planted - "..t3.."ms")
-	--]]
 	
 	amgmt.debug("applying map data")
 	vm:set_data(data)
@@ -393,7 +382,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 end
 
 minetest.register_on_generated(function(minp, maxp, seed)
-	if minp.y > HMAX or maxp.y < HMIN then return end
+	if minp.y > amgmt.HMAX or maxp.y < amgmt.HMIN then return end
 	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
 	amgmt_generate(minp, maxp, seed, vm, emin, emax)
 end)
@@ -474,6 +463,23 @@ minetest.register_chatcommand("amgmt_fixlight", {
 
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/hud.lua")
 
-print("[amgmt]:"..amgmt.tree.count.." tree(s) registered")
-print("[amgmt]:"..(#amgmt.biome.list-1).." biome(s) registered") -- do not count NIL biome!
-print("[amgmt]:"..#amgmt.ore.registered.." ore(s) registered")
+-- after all mods loaded, wait 3 seconds and print the statistics
+minetest.after(3, function()
+	-- should we use this?
+	local function plural(n, singular, plural) return n < 2 and singular or plural end
+	print("[amgmt]:"..
+		(amgmt.tree.count-1).." ".. -- do not count nil tree!
+		plural(amgmt.tree.count-1, "tree", "trees")..
+		" registered"
+	)
+	print("[amgmt]:"..
+		#amgmt.biome.list.." "..
+		plural(#amgmt.biome.list, "biome", "biomes")..
+		" registered"
+	)
+	print("[amgmt]:"..
+		#amgmt.ore.registered.." "..
+		plural(#amgmt.ore.registered, "ore", "ores")..
+		" registered"
+	)
+end)

@@ -11,7 +11,7 @@ function amgmt.tree.register(def)
 	amgmt.tree.registered[def.name] = {
 		chance = def.chance or 1024,
 		minh = def.minh or 0,
-		maxh = def.maxh or HMAX,
+		maxh = def.maxh or amgmt.HMAX,
 		grows_on = def.grows_on or "default:dirt_with_grass",
 		grow = def.grow or function() return nil end
 	}
@@ -34,6 +34,7 @@ amgmt.tree.register({
 })
 
 local regtr = amgmt.tree.register
+local wl = amgmt.wl
 
 --node id?
 local gci = minetest.get_content_id
@@ -376,6 +377,26 @@ regtr({
 		end
 		
 		--amgmt.debug("papyrus spawned at:"..x..","..y..","..z)
+	end
+})
+
+
+local c_seaweed = gci("amgmt:seaweed")
+
+--seaweed
+regtr({
+	name = "seaweed",
+	chance = 256,
+	minh = wl-512,
+	maxh = wl-5,
+	grows_on = "default:sand",
+	grow = function(pos, data, area, seed, minp, maxp, pr)
+		local x, y, z = pos.x, pos.y, pos.z
+		for yy = math.max(y,minp.y), math.min(y+pr:next(2,4),maxp.y) do
+			data[area:index(x, yy, z)] = c_seaweed
+		end
+		
+		--amgmt.debug("seaweed spawned at:"..x..","..y..","..z)
 	end
 })
 
