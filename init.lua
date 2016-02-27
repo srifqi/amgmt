@@ -7,14 +7,18 @@ amgmt = {}
 print("[amgmt] (Another Map Generator for Minetest)")
 
 --param?
-amgmt.DEBUG = false		-- set to true if your want to check performance (see debug.txt)
-amgmt.wl = 0			-- water level
-amgmt.HMAX = 500		-- maximum height for the mapgen to generate
-amgmt.HMIN = -30000		-- minimum height for the mapgen to generate
-amgmt.BEDROCK = -30000	-- bedrock level
+amgmt.DEBUG = false			-- set to true if you want to get more info (all player will be noticed)
+amgmt.wl = 0				-- water level
+amgmt.HMAX = 1000			-- maximum height for the mapgen to generate
+amgmt.HMIN = -30000			-- minimum height for the mapgen to generate
+amgmt.BEDROCK = -30000		-- bedrock level
+amgmt.spawn_radius = 5000	-- radius from center for a random spawn place (100 - 30000)
 
 function amgmt.debug(text)
-	if amgmt.DEBUG == true then print("[amgmt]:"..(text or "")) end
+	if amgmt.DEBUG == true then
+		print("[amgmt]: "..(text or ""))
+		minetest.chat_send_all("[amgmt]: "..(text or ""))
+	end
 end
 
 amgmt.biome = {}
@@ -31,13 +35,11 @@ minetest.register_on_mapgen_init(function(mgparams)
 	minetest.set_mapgen_params({mgname="singlenode", flags="nolight"})
 end)
 
-local function get_perlin_map(np, minp, maxp)
-	local sidelen = maxp.x - minp.x +1
-	local pm = minetest.get_perlin_map(
+local function get_perlin_map(np, sidelen)
+	return minetest.get_perlin_map(
 		{offset=0, scale=1, spread={x=np.c, y=np.c, z=np.c}, seed=np.s, octaves=np.o, persist=np.p},
 		{x=sidelen, y=sidelen, z=sidelen}
 	)
-	return pm:get2dMap_flat({x = minp.x, y = minp.z, z = 0})
 end
 
 -- noiseparam
@@ -50,6 +52,10 @@ amgmt.np = {
 	l = {s = 1667, o = 6, p = 0.5, c = 256}, -- lake
 	c = {s = 1024, o = 7, p = 0.5, c = 512}, -- cave
 	d = {s = 2048, o = 7, p = 0.5, c = 512}, -- cave deepness
+	v_a = {s = 4848, o = 4, p = 0.5, c = 32}, -- 3d cave (a)
+	v_b = {s = 4816, o = 4, p = 0.5, c = 32}, -- 3d cave (b)
+	v_c = {s = -483, o = 4, p = 0.5, c = 32}, -- 3d cave (c)
+	v_d = {s = 4832, o = 4, p = 0.5, c = 32}, -- 3d cave (d)
 }
 
 local np = amgmt.np -- copy of noiseparam
@@ -82,7 +88,7 @@ function get_base(base, temp, humi, plat)
 		elseif humi <= 50 then
 			base_ = amgmt.wl-(1-(50-humi)/2.5)*(base%3+1)-1
 		end
-	--riverbank
+	--riverbank (canyon-like structure)
 	elseif humi < 55 and humi > 45 then
 		if plat > 0.25 and plat < 0.45 then
 			if humi >= 50 then
@@ -169,6 +175,9 @@ local function build_cave_segment(x, y, z, data, area, shape, radius, deletednod
 	end
 end
 
+--loaded perlin noises
+local pn = {}
+
 local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	local t1 = os.clock()
 	local pr = PseudoRandom(seed)
@@ -181,58 +190,99 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 	
 	--noise
 	local t2 = os.clock()
-	local base = get_perlin_map(np.b, minp, maxp) -- base height
-	local plat = get_perlin_map(np.p, minp, maxp) -- plateau
-	local temp = get_perlin_map(np.t, minp, maxp) -- temperature (0-2)
-	local humi = get_perlin_map(np.h, minp, maxp) -- humidity (0-100)
-	local lake = get_perlin_map(np.l, minp, maxp) -- lake
+	local sidelen = maxp.x - minp.x +1
+	
+	-- make perlin map objects
+	if pn.base == nil then
+		pn.base = get_perlin_map(np.b, sidelen) -- base height
+		pn.plat = get_perlin_map(np.p, sidelen) -- plateau
+		pn.temp = get_perlin_map(np.t, sidelen) -- temperature (0-2)
+		pn.humi = get_perlin_map(np.h, sidelen) -- humidity (0-100)
+		pn.lake = get_perlin_map(np.l, sidelen) -- lake
+		
+		pn.cave = {}
+		pn.deep = {}
+		for o = 1, 2 do
+			local cnp = np.c
+			cnp.s = cnp.s + o
+			pn.cave[o] = get_perlin_map(cnp, sidelen)
+			local dnp = np.d
+			dnp.s = dnp.s + o
+			pn.deep[o] = get_perlin_map(dnp, sidelen)
+		end
+		
+		pn.cave3d = {
+			get_perlin_map(np.v_a, sidelen, true),
+			get_perlin_map(np.v_b, sidelen, true),
+			get_perlin_map(np.v_c, sidelen, true),
+			get_perlin_map(np.v_d, sidelen, true)
+		}
+	end
+	
+	-- local noises
+	local minpxz = {x = minp.x, y = minp.z, z = 1}
+	local base = pn.base:get2dMap_flat(minpxz) -- base height
+	local plat = pn.plat:get2dMap_flat(minpxz) -- plateau
+	local temp = pn.temp:get2dMap_flat(minpxz) -- temperature (0-2)
+	local humi = pn.humi:get2dMap_flat(minpxz) -- humidity (0-100)
+	local lake = pn.humi:get2dMap_flat(minpxz) -- lake
 	
 	local cave = {} -- list of caves
 	local deep = {} -- list of cave deepness
-	for o = 1, 5 do
-		local cnp = np.c
-		cnp.s = cnp.s + o
-		cave[o] = get_perlin_map(cnp, minp, maxp)
-		local dnp = np.d
-		dnp.s = dnp.s + o
-		deep[o] = get_perlin_map(dnp, minp, maxp)
+	for o = 1, 2 do
+		cave[o] = pn.cave[o]:get2dMap_flat(minpxz)
+		deep[o] = pn.deep[o]:get2dMap_flat(minpxz)
 	end
 	
-	local sidelen = maxp.x - minp.x +1
+	local cave3d = {} -- list of 3d caves
+	for o = 1, 4 do
+		cave3d[o] = pn.cave3d[o]:get3dMap_flat(minp)
+	end
+	
 	local t3 = math.ceil((os.clock() - t2) * 100000)/100
 	amgmt.debug("noise calculated - "..t3.."ms")
 	
 	--terraforming
 	local t2 = os.clock()
-	local nizx = 0
-	local nizyx = 0
+	local nizx = 1
+	local nizyx = 1
 	for z = minp.z, maxp.z do
-	for x = minp.x, maxp.x do
-		nizx = nizx + 1
-		nizyx = nizyx + 1
-		local base_ = math.ceil((base[nizx] * 25) + amgmt.wl)
-		local plat_ = plat[nizx]
-		local temp_ = math.abs(temp[nizx] * 2)
-		local humi_ = math.abs(humi[nizx] * 100)
-		base_ = get_base(base_, temp_, humi_, plat_)
-		for y_ = minp.y, maxp.y do
-			nizyx = nizyx + sidelen
-			local vi = area:index(x,y_,z)
-			-- world height limit :(
-			if y_ <= amgmt.HMIN or y_ >= amgmt.HMAX then
-				-- air
-			elseif y_ == amgmt.BEDROCK then
-				data[vi] = c_bedrock
-			-- biome
-			else
-				local node = amgmt.biome.get_block_by_temp_humi(temp_, humi_, base_, amgmt.wl, y_, x, z)
-				if node ~= c_air then
-					data[vi] = node
+		for x = minp.x, maxp.x do
+			local base_ = math.ceil((base[nizx] * 25) + amgmt.wl)
+			local plat_ = plat[nizx]
+			local temp_ = math.abs(temp[nizx] * 2)
+			local humi_ = math.abs(humi[nizx] * 100)
+			base_ = get_base(base_, temp_, humi_, plat_)
+			for y_ = minp.y, maxp.y do
+				local vi = area:index(x,y_,z)
+				-- world height limit :(
+				if y_ <= amgmt.HMIN or y_ >= amgmt.HMAX then
+					-- air
+				elseif y_ == amgmt.BEDROCK then
+					data[vi] = c_bedrock
+				-- biome
+				else
+					if not ( -- if is not cave
+						cave3d[1][nizyx] ^ 2 +
+						cave3d[2][nizyx] ^ 2 +
+						cave3d[3][nizyx] ^ 2 +
+						cave3d[4][nizyx] ^ 2 < 0.072
+					) then
+						local node = amgmt.biome.get_block_by_temp_humi(
+							temp_, humi_, base_,
+							amgmt.wl, y_, x, z
+						)
+						if node ~= c_air then
+							data[vi] = node
+						end
+					end
 				end
+				nizyx = nizyx + sidelen
 			end
+			nizx = nizx + 1
+			nizyx = nizyx - sidelen * sidelen +1
 		end
-		nizyx = nizyx - (sidelen * sidelen)
-	end
+	nizyx = nizyx + sidelen * (sidelen-1)
 	end
 	local t3 = math.ceil((os.clock() - t2) * 100000)/100
 	amgmt.debug("terrain generated - "..t3.."ms")
@@ -257,7 +307,7 @@ local function amgmt_generate(minp, maxp, seed, vm, emin, emax)
 		nizx = nizx + 1
 		local base_ = math.ceil((base[nizx] * 25) + amgmt.wl)
 		
-		for o = 1, 5 do
+		for o = 1, 2 do
 			local cave_ = (cave[o][nizx]+1)/2
 			local deep_ = deep[o][nizx] * 45 - 25
 			
@@ -390,9 +440,11 @@ end)
 
 local function amgmt_regenerate(pos, name)
 	minetest.chat_send_all("Regenerating "..name.."'s map chunk...")
-	local minp = {x = 80*math.floor((pos.x+32)/80)-32,
-			y = 80*math.floor((pos.y+32)/80)-32,
-			z = 80*math.floor((pos.z+32)/80)-32}
+	local minp = {
+		x = 80*math.floor((pos.x+32)/80)-32,
+		y = 80*math.floor((pos.y+32)/80)-32,
+		z = 80*math.floor((pos.z+32)/80)-32
+	}
 	local maxp = {x = minp.x+79, y = minp.y+79, z = minp.z+79}
 	local vm = minetest.get_voxel_manip()
 	local emin, emax = vm:read_from_map(minp, maxp)
@@ -432,9 +484,11 @@ minetest.register_chatcommand("amgmt_regenerate", {
 
 local function amgmt_fixlight(pos, name)
 	minetest.chat_send_player(name, "Fixing lightning. This may take a while...")
-	local minp = {x = 80*math.floor((pos.x+32)/80)-32,
-			y = 80*math.floor((pos.y+32)/80)-32,
-			z = 80*math.floor((pos.z+32)/80)-32}
+	local minp = {
+		x = 80*math.floor((pos.x+32)/80)-32,
+		y = 80*math.floor((pos.y+32)/80)-32,
+		z = 80*math.floor((pos.z+32)/80)-32
+	}
 	local maxp = {x = minp.x+79, y = minp.y+79, z = minp.z+79}
 	
 	-- Fix lighting
@@ -463,9 +517,10 @@ minetest.register_chatcommand("amgmt_fixlight", {
 })
 
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/hud.lua")
+dofile(minetest.get_modpath(minetest.get_current_modname()).."/spawn.lua")
 
--- after all mods loaded, wait 3 seconds and print the statistics
-minetest.after(3, function()
+-- after all mods loaded, wait a second and print the statistics
+minetest.after(1, function()
 	-- should we use this?
 	local function plural(n, singular, plural) return n < 2 and singular or plural end
 	print("[amgmt]:"..

@@ -9,6 +9,10 @@ function amgmt.biome.add(p)
 		maxt = p.maxt,			-- max temperature
 		minh = p.minh or 0,		-- min humidity
 		maxh = p.maxh or 100,	-- max humidity
+		-- okay to spawn here?
+		-- Note: player will be spawned at base, make
+		-- sure the block at "base" is solid
+		spawn_here = p.spawn_here or false,
 		trees = p.trees or {{"nil",1024}},
 		get_block = p.get_block
 	}
@@ -20,8 +24,8 @@ function amgmt.biome.clear()
 end
 
 function amgmt.biome.get_by_temp_humi(t,h)
-	t = math.min(t, 2)
-	h = math.min(h, 100)
+	t = math.min(math.abs(t), 2)
+	h = math.min(math.abs(h), 100)
 	local bl = amgmt.biome.list
 	local found = {}
 	for i = 1, #bl do
@@ -40,8 +44,8 @@ function amgmt.biome.get_by_temp_humi(t,h)
 end
 
 function amgmt.biome.get_block_by_temp_humi(temp,humi,base,wl,y,x,z)
-	temp = math.min(temp, 2)
-	humi = math.min(humi, 100)
+	temp = math.min(math.abs(temp), 2)
+	humi = math.min(math.abs(humi), 100)
 	base = math.min(base, 255)
 	return amgmt.biome.list[
 		amgmt.biome.get_by_temp_humi(temp,humi)[1]

@@ -85,6 +85,7 @@ badd({
 	maxt = 0.2,
 	minh = 30,
 	maxh = 50,
+	spawn_here = true,
 	trees = {{"pine",225}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -116,6 +117,7 @@ badd({
 	maxt = 0.2,
 	minh = 0,
 	maxh = 30,
+	spawn_here = true,
 	trees = {},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -143,6 +145,7 @@ badd({
 	maxt = 0.2,
 	minh = 50,
 	maxh = 70,
+	spawn_here = true,
 	trees = {{"ice_spike",25}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -174,6 +177,7 @@ badd({
 	maxt = 0.2,
 	minh = 70,
 	maxh = 100,
+	spawn_here = true,
 	trees = {{"pine_cold",25}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -205,6 +209,7 @@ badd({
 	maxt = 0.4,
 	minh = 40,
 	maxh = 60,
+	spawn_here = true,
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
 			return c_air
@@ -234,6 +239,7 @@ badd({
 	name = "Stone Plain",
 	mint = 0.2,
 	maxt = 0.4,
+	spawn_here = true,
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
 			return c_air
@@ -282,6 +288,7 @@ badd({
 	name = "Taiga",
 	mint = 0.7,
 	maxt = 1.0,
+	spawn_here = true,
 	trees = {{"pine_taiga",25}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -312,6 +319,7 @@ badd({
 	maxt = 1.2,
 	minh = 40,
 	maxh = 60,
+	spawn_here = true,
 	trees = {{"flowers",5},{"flowers",5},{"flowers",5}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -341,6 +349,7 @@ badd({
 	maxt = 1.2,
 	minh = 0,
 	maxh = 100,
+	spawn_here = true,
 	trees = {{"grass14",30}, {"grass35",5},{"papyrus",15},{"flowers",15}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -409,6 +418,7 @@ badd({
 	maxt = 1.4,
 	minh = 0,
 	maxh = 100,
+	spawn_here = true,
 	trees = {{"normal",19},{"grass14",60},{"grass35",5},{"papyrus",16},{"flowers",18},{"seaweed",128}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -442,6 +452,7 @@ badd({
 	maxt = 1.6,
 	minh = 0,
 	maxh = 100,
+	spawn_here = true,
 	trees = {{"jungle",16},{"jungle_grass",5},{"papyrus",20},{"flowers",20},{"seaweed",256}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -474,6 +485,7 @@ badd({
 	name = "Savanna",
 	mint = 1.6,
 	maxt = 1.8,
+	spawn_here = true,
 	trees = {{"savanna",225},{"grass35",4}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
@@ -508,7 +520,7 @@ badd({
 	maxt = 2,
 	minh = 10,
 	maxh = 50,
-	trees = nil,
+	spawn_here = true,
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
 			return c_air
@@ -541,6 +553,7 @@ badd({
 	name = "Desert",
 	mint = 1.8,
 	maxt = 2,
+	spawn_here = true,
 	trees = {{"cactus",50},{"dry_shrub",50},{"seaweed",256}},
 	get_block = function(temp, humi, base, wl, y)
 		if y > base and y > wl then
